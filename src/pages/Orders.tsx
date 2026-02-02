@@ -24,6 +24,8 @@
     link: string;
     created_at: string;
     status: string;
+    provider_status?: string | null;
+    provider_charge?: number | null;
     provider_start_count?: number | null;
     provider_remains?: number | null;
   };
@@ -34,8 +36,8 @@
    const { loading, fetchOrderStatus } = useInstaLuxoAPI();
   const navigate = useNavigate();
 
-   useEffect(() => {
-     const loadOrders = async () => {
+    useEffect(() => {
+      const loadOrders = async () => {
        const { data: user } = await supabase.auth.getUser();
        if (!user.user) {
          toast.error("Faça login para ver pedidos");
@@ -43,7 +45,7 @@
          return;
        }
 
-       const { data, error } = await supabase
+        const { data, error } = await supabase
          .from("smm_orders")
          .select("*")
          .eq("user_id", user.user.id)
@@ -55,27 +57,46 @@
          return;
        }
 
-       setOrders(data || []);
+        setOrders(data || []);
 
        // Buscar status real da API
-       const externalIds = data?.map((o) => o.provider_order_id).filter(Boolean) || [];
-       if (externalIds.length > 0) {
-         const statuses = await fetchOrderStatus(externalIds);
-         // Atualizar status no DB
-         for (const order of data || []) {
-           const apiStatus = statuses[order.provider_order_id!];
-           if (apiStatus) {
-             await supabase
-               .from("smm_orders")
-               .update({
-                 provider_status: apiStatus.status,
-                 provider_start_count: parseInt(apiStatus.start_count),
-                 provider_remains: parseInt(apiStatus.remains),
-               })
-               .eq("id", order.id);
-           }
-         }
-       }
+        const externalIds = data?.map((o) => o.provider_order_id).filter(Boolean) || [];
+        if (externalIds.length > 0) {
+          const statuses = await fetchOrderStatus(externalIds);
+
+          const updates = (data || [])
+            .map((order) => {
+              const providerId = order.provider_order_id;
+              if (!providerId) return null;
+              const apiStatus = statuses[providerId];
+              if (!apiStatus) return null;
+
+              const charge = Number(apiStatus.charge);
+              const startCount = Number(apiStatus.start_count);
+              const remains = Number(apiStatus.remains);
+
+              return supabase
+                .from("smm_orders")
+                .update({
+                  provider_status: apiStatus.status,
+                  provider_charge: Number.isFinite(charge) ? charge : null,
+                  provider_start_count: Number.isFinite(startCount) ? startCount : null,
+                  provider_remains: Number.isFinite(remains) ? remains : null,
+                })
+                .eq("id", order.id);
+            })
+            .filter(Boolean);
+
+          await Promise.all(updates as any);
+
+          // Recarregar para refletir os campos atualizados
+          const { data: refreshed } = await supabase
+            .from("smm_orders")
+            .select("*")
+            .eq("user_id", user.user.id)
+            .order("created_at", { ascending: false });
+          if (refreshed) setOrders(refreshed);
+        }
      };
 
      loadOrders();
@@ -89,7 +110,7 @@
      );
    });
 
-   const getStatusBadge = (status: string) => {
+    const getStatusBadge = (status: string) => {
      switch (status) {
        case "Completed":
        case "completed":
@@ -157,12 +178,29 @@
                     <time className="text-sm text-muted-foreground whitespace-nowrap hidden md:block">
                       {new Date(order.created_at).toLocaleString("pt-BR")}
                     </time>
-                    {getStatusBadge(order.status)}
+                     {getStatusBadge((order.provider_status || order.status) ?? "")}
                    <Button variant="default" size="icon">
                      ⋮
                    </Button>
                  </div>
                </div>
+
+                {(order.provider_charge || order.provider_start_count != null || order.provider_remains != null) && (
+                  <div className="mt-3 grid grid-cols-1 gap-1 text-xs text-muted-foreground md:grid-cols-3">
+                    <div className="flex items-center justify-between md:justify-start md:gap-2">
+                      <span className="font-medium text-foreground/80">Carga:</span>
+                      <span>{order.provider_charge != null ? `R$ ${order.provider_charge.toFixed(2)}` : "—"}</span>
+                    </div>
+                    <div className="flex items-center justify-between md:justify-start md:gap-2">
+                      <span className="font-medium text-foreground/80">Início:</span>
+                      <span>{order.provider_start_count ?? "—"}</span>
+                    </div>
+                    <div className="flex items-center justify-between md:justify-start md:gap-2">
+                      <span className="font-medium text-foreground/80">Restantes:</span>
+                      <span>{order.provider_remains ?? "—"}</span>
+                    </div>
+                  </div>
+                )}
              </CardContent>
            </Card>
          ))}
