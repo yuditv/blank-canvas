@@ -72,7 +72,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
     setLoadingPix(true);
     try {
-      const { data, error } = await supabase.functions.invoke("mercado-pago-create-pix", {
+      const { data, error } = await supabase.functions.invoke("mercado-pago-pix", {
         body: { amount: parseFloat(amount) },
       });
 

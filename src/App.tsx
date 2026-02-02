@@ -8,6 +8,7 @@ import { NewOrderPage } from "@/pages/NewOrder";
 import { OrdersPage } from "@/pages/Orders";
 import { WalletPage } from "@/pages/Wallet";
 import { FaqPage } from "@/pages/Faq";
+import { ResellerPanelPage } from "@/pages/ResellerPanel";
 import { LoginPage } from "@/pages/Login";
 import NotFound from "./pages/NotFound";
 
@@ -25,6 +26,7 @@ const App = () => (
             <Route path="/" element={<NewOrderPage />} />
             <Route path="/pedidos" element={<OrdersPage />} />
             <Route path="/saldo" element={<WalletPage />} />
+            <Route path="/painel-revenda" element={<ResellerPanelPage />} />
             <Route path="/ajuda" element={<FaqPage />} />
           </Route>
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

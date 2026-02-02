@@ -23,6 +23,7 @@
    Coins,
    User,
   LogOut,
+  Store,
  } from "lucide-react";
  import { Button } from "@/components/ui/button";
 import { LogoutButton } from "@/components/auth/LogoutButton";
@@ -48,6 +49,7 @@ import { toast } from "sonner";
    { path: "/", icon: ShoppingCart, label: "Fazer Novo Pedido" },
    { path: "/pedidos", icon: History, label: "Histórico de Pedido" },
    { path: "/saldo", icon: Wallet, label: "Adicionar Saldo" },
+  { path: "/painel-revenda", icon: Store, label: "Painel de Revenda" },
    { path: "/ajuda", icon: HelpCircle, label: "FAQ" },
  ];
  
