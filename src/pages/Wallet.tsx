@@ -1,3 +1,7 @@
+ import { useState, useEffect } from "react";
+ import { supabase } from "@/integrations/supabase/client";
+ import { useInstaLuxoAPI } from "@/hooks/useInstaLuxoAPI";
+ import { toast } from "sonner";
  import { Card, CardContent, CardHeader } from "@/components/ui/card";
  import { Button } from "@/components/ui/button";
  import { Input } from "@/components/ui/input";
@@ -13,6 +17,45 @@
  import { Wallet as WalletIcon, CreditCard, Info } from "lucide-react";
  
  export function WalletPage() {
+   const [apiBalance, setApiBalance] = useState<string | null>(null);
+   const [walletBalance, setWalletBalance] = useState<number>(0);
+   const [userName, setUserName] = useState<string>("usuário");
+   const { loading, fetchBalance } = useInstaLuxoAPI();
+
+   useEffect(() => {
+     const loadData = async () => {
+       const { data: user } = await supabase.auth.getUser();
+       if (!user.user) {
+         toast.error("Faça login para ver o saldo");
+         return;
+       }
+
+       // Carregar saldo da API Instaluxo
+       const balance = await fetchBalance();
+       if (balance) setApiBalance(balance.balance);
+
+       // Carregar saldo do wallet Supabase
+       const { data: wallet } = await supabase
+         .from("user_wallets")
+         .select("credits")
+         .eq("user_id", user.user.id)
+         .single();
+
+       if (wallet) setWalletBalance(wallet.credits || 0);
+
+       // Carregar nome do usuário
+       const { data: profile } = await supabase
+         .from("profiles")
+         .select("whatsapp")
+         .eq("user_id", user.user.id)
+         .single();
+
+       if (profile?.whatsapp) setUserName(profile.whatsapp);
+     };
+
+     loadData();
+   }, []);
+
    return (
      <div className="mx-auto max-w-4xl space-y-6">
        <Card className="panel-glass border-primary/20">
@@ -120,8 +163,16 @@
                      <WalletIcon className="h-8 w-8 text-primary" />
                    </div>
                    <div>
-                     <h3 className="font-semibold">Saldo Gasto</h3>
-                     <p className="text-3xl font-bold text-primary mt-2">R$ 1010,00</p>
+                      <h3 className="font-semibold">Saldo API Instaluxo</h3>
+                      <p className="text-3xl font-bold text-primary mt-2">
+                        {loading ? "..." : apiBalance ? `$${parseFloat(apiBalance).toFixed(2)}` : "N/A"}
+                      </p>
+                    </div>
+                    <div className="border-t pt-4">
+                      <h3 className="font-semibold text-sm">Saldo Wallet (Supabase)</h3>
+                      <p className="text-xl font-bold text-muted-foreground mt-1">
+                        R$ {walletBalance.toFixed(2)}
+                      </p>
                    </div>
                  </CardContent>
                </Card>
@@ -137,7 +188,7 @@
              <div className="space-y-1">
                <p className="font-medium text-primary">Informação</p>
                <p className="text-sm text-muted-foreground">
-                 Olá <strong>yudiiitv</strong>, o valor mínimo de pagamento para instaluxo.com
+                  Olá <strong>{userName}</strong>, o valor mínimo de pagamento para instaluxo.com
                  é R$1,00. Os pagamentos funcionam de forma totalmente automática.
                </p>
              </div>
