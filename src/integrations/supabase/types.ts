@@ -2742,6 +2742,57 @@ export type Database = {
         }
         Relationships: []
       }
+      reseller_requests: {
+        Row: {
+          admin_password: string
+          admin_username: string
+          approved_at: string | null
+          created_at: string
+          currency: string
+          domain: string
+          id: string
+          metadata: Json | null
+          monthly_price: number
+          rejected_at: string | null
+          rejection_reason: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          admin_password: string
+          admin_username: string
+          approved_at?: string | null
+          created_at?: string
+          currency?: string
+          domain: string
+          id?: string
+          metadata?: Json | null
+          monthly_price: number
+          rejected_at?: string | null
+          rejection_reason?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          admin_password?: string
+          admin_username?: string
+          approved_at?: string | null
+          created_at?: string
+          currency?: string
+          domain?: string
+          id?: string
+          metadata?: Json | null
+          monthly_price?: number
+          rejected_at?: string | null
+          rejection_reason?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       scheduled_messages: {
         Row: {
           client_id: string
