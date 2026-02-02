@@ -8,7 +8,65 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    /* Futuristic dark (default) */
+    /* Light theme */
+    --background: 230 35% 98%;
+    --foreground: 230 30% 10%;
+
+    --card: 230 30% 100%;
+    --card-foreground: 230 30% 10%;
+
+    --popover: 230 30% 100%;
+    --popover-foreground: 230 30% 10%;
+
+    /* brand purple (like screenshots) */
+    --primary: 272 92% 58%;
+    --primary-foreground: 210 40% 98%;
+
+    --secondary: 230 25% 94%;
+    --secondary-foreground: 230 30% 10%;
+
+    --muted: 230 20% 94%;
+    --muted-foreground: 230 12% 42%;
+
+    /* secondary purple glow */
+    --accent: 286 95% 62%;
+    --accent-foreground: 230 30% 10%;
+
+    /* success (green CTA like screenshots) */
+    --success: 145 72% 46%;
+    --success-foreground: 210 40% 98%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 230 18% 86%;
+    --input: 230 18% 86%;
+    --ring: 272 92% 58%;
+
+    --radius: 0.85rem;
+
+    /* extra tokens */
+    --shadow-soft: 0 20px 80px -40px hsl(var(--foreground) / 0.14);
+    --shadow-glow: 0 18px 60px -26px hsl(var(--primary) / 0.35);
+    --gradient-hero: radial-gradient(1200px 800px at 20% 10%, hsl(var(--primary) / 0.18), transparent 55%),
+      radial-gradient(1000px 700px at 80% 20%, hsl(var(--accent) / 0.14), transparent 60%),
+      radial-gradient(900px 600px at 50% 90%, hsl(var(--primary) / 0.10), transparent 62%);
+    --gradient-panel: linear-gradient(135deg, hsl(var(--card) / 0.86), hsl(var(--card) / 0.62));
+    --grid-color: hsl(var(--border) / 0.55);
+
+    /* Sidebar (match dark theme) */
+    --sidebar-background: 230 35% 96%;
+    --sidebar-foreground: 230 30% 10%;
+    --sidebar-primary: var(--primary);
+    --sidebar-primary-foreground: var(--primary-foreground);
+    --sidebar-accent: 230 22% 92%;
+    --sidebar-accent-foreground: 230 30% 10%;
+    --sidebar-border: 230 18% 86%;
+    --sidebar-ring: var(--ring);
+  }
+
+  .dark {
+    /* Futuristic dark */
     --background: 230 35% 6%;
     --foreground: 210 40% 98%;
 
@@ -18,7 +76,6 @@ All colors MUST be HSL.
     --popover: 230 30% 10%;
     --popover-foreground: 210 40% 98%;
 
-    /* brand purple (like screenshots) */
     --primary: 272 92% 58%;
     --primary-foreground: 210 40% 98%;
 
@@ -26,13 +83,11 @@ All colors MUST be HSL.
     --secondary-foreground: 210 40% 98%;
 
     --muted: 230 18% 14%;
-    --muted-foreground: 217 18% 68%;
+    --muted-foreground: 215 20.2% 65.1%;
 
-    /* secondary purple glow */
     --accent: 286 95% 62%;
     --accent-foreground: 210 40% 98%;
 
-    /* success (green CTA like screenshots) */
     --success: 145 72% 46%;
     --success-foreground: 210 40% 98%;
 
@@ -43,9 +98,6 @@ All colors MUST be HSL.
     --input: 230 20% 20%;
     --ring: 272 92% 58%;
 
-    --radius: 0.85rem;
-
-    /* extra tokens */
     --shadow-soft: 0 20px 80px -40px hsl(var(--foreground) / 0.35);
     --shadow-glow: 0 18px 60px -26px hsl(var(--primary) / 0.65);
     --gradient-hero: radial-gradient(1200px 800px at 20% 10%, hsl(var(--primary) / 0.28), transparent 55%),
@@ -54,7 +106,6 @@ All colors MUST be HSL.
     --gradient-panel: linear-gradient(135deg, hsl(var(--card) / 0.78), hsl(var(--card) / 0.55));
     --grid-color: hsl(var(--border) / 0.55);
 
-    /* Sidebar (match dark theme) */
     --sidebar-background: 230 33% 7%;
     --sidebar-foreground: 210 40% 98%;
     --sidebar-primary: var(--primary);
@@ -63,48 +114,6 @@ All colors MUST be HSL.
     --sidebar-accent-foreground: 210 40% 98%;
     --sidebar-border: 230 18% 18%;
     --sidebar-ring: var(--ring);
-  }
-
-  .dark {
-    /* slightly deeper for explicit .dark */
-    --background: 230 40% 4.5%;
-    --foreground: 210 40% 98%;
-
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-
-    --primary: 272 92% 58%;
-    --primary-foreground: 210 40% 98%;
-
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-
-    --accent: 286 95% 62%;
-    --accent-foreground: 210 40% 98%;
-
-    --success: 145 72% 46%;
-    --success-foreground: 210 40% 98%;
-
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 272 92% 58%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
   }
 }
 
@@ -116,6 +125,13 @@ All colors MUST be HSL.
   body {
     @apply bg-background text-foreground antialiased;
     text-rendering: geometricPrecision;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .animate-float,
+    .animate-glow-pulse {
+      animation: none !important;
+    }
   }
 
   ::selection {

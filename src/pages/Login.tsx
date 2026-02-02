@@ -6,7 +6,8 @@
  import { Input } from "@/components/ui/input";
  import { Label } from "@/components/ui/label";
  import { toast } from "sonner";
- import { LogIn } from "lucide-react";
+  import { AuroraBackground } from "@/components/layout/AuroraBackground";
+  import { SamyLuxoLogo } from "@/components/brand/SamyLuxoLogo";
  
  export function LoginPage() {
    const [email, setEmail] = useState("");
@@ -44,15 +45,15 @@
    };
  
    return (
-     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-primary/5 p-4">
-       <Card className="w-full max-w-md panel-glass border-primary/20">
-         <CardHeader className="text-center border-b border-border/60 pb-6">
-           <div className="flex justify-center mb-4">
-             <div className="h-16 w-16 rounded-full bg-primary/20 flex items-center justify-center">
-               <LogIn className="h-8 w-8 text-primary" />
-             </div>
-           </div>
-           <h1 className="text-2xl font-bold">
+      <AuroraBackground className="flex items-center justify-center p-4">
+        <Card className="w-full max-w-md panel-glass border-primary/20 animate-enter">
+          <CardHeader className="text-center border-b border-border/60 pb-6">
+            <div className="flex justify-center mb-4">
+              <div className="rounded-2xl border border-border/70 bg-card/50 px-4 py-3 shadow-glow">
+                <SamyLuxoLogo />
+              </div>
+            </div>
+            <h1 className="text-2xl font-bold animate-fade-in">
              {isSignUp ? "Criar Conta" : "Bem-vindo de volta"}
            </h1>
            <p className="text-sm text-muted-foreground">
@@ -118,6 +119,6 @@
            </form>
          </CardContent>
        </Card>
-     </div>
+      </AuroraBackground>
    );
  }

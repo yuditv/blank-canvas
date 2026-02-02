@@ -27,6 +27,8 @@
   FileText,
  } from "lucide-react";
  import { Button } from "@/components/ui/button";
+ import { AuroraBackground } from "@/components/layout/AuroraBackground";
+ import { SamyLuxoLogo } from "@/components/brand/SamyLuxoLogo";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -69,19 +71,13 @@ import { toast } from "sonner";
        collapsible="icon"
      >
        <SidebarHeader className="border-b border-sidebar-border p-4">
-         {!collapsed && (
-           <div className="flex items-center gap-2">
-             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
-               <span className="text-lg font-bold text-primary-foreground">S</span>
-             </div>
-             <span className="text-lg font-bold text-gradient">SamyLuxo</span>
-           </div>
-         )}
-         {collapsed && (
-           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
-             <span className="text-lg font-bold text-primary-foreground">S</span>
-           </div>
-         )}
+          {!collapsed ? (
+            <SamyLuxoLogo />
+          ) : (
+            <div className="flex items-center justify-center">
+              <SamyLuxoLogo compact />
+            </div>
+          )}
        </SidebarHeader>
  
        <SidebarContent className="px-2">
@@ -158,18 +154,19 @@ import { toast } from "sonner";
  
    return (
      <SidebarProvider defaultOpen={true}>
-       <div className="flex min-h-screen w-full bg-background">
-         <AppSidebarContent />
- 
-         <div className="flex-1 flex flex-col">
-           <header className="h-14 border-b border-border flex items-center justify-between px-4 bg-card/50">
+        <AuroraBackground>
+          <div className="flex min-h-screen w-full">
+            <AppSidebarContent />
+
+            <div className="flex-1 flex flex-col">
+              <header className="h-14 border-b border-border flex items-center justify-between px-4 panel-glass animate-fade-in">
              <div className="flex items-center gap-2">
                <SidebarTrigger />
              </div>
  
-             <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2">
                <div className="flex items-center gap-1.5 rounded-lg border border-border bg-background px-3 py-1.5">
-                 <Coins className="h-4 w-4 text-yellow-500" />
+                  <Coins className="h-4 w-4 text-accent" />
                  <span className="text-sm font-medium">
                    {currency === "BRL" ? "R$" : "$"} {balance.toFixed(2)}
                  </span>
@@ -213,11 +210,12 @@ import { toast } from "sonner";
              </div>
            </header>
  
-           <main className="flex-1 overflow-auto p-6">
+            <main className="flex-1 overflow-auto p-6 animate-fade-in">
              <Outlet />
            </main>
          </div>
-       </div>
+          </div>
+        </AuroraBackground>
      </SidebarProvider>
    );
  }
