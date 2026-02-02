@@ -192,12 +192,16 @@ import { Instagram, Music2, Youtube, Facebook, Send, Twitch, MonitorPlay, Shoppi
                ESCOLHA UM SERVIÇO
                <span className="text-yellow-500">👇</span>
              </Label>
-             <Select value={selectedService} onValueChange={setSelectedService}>
+                <Select value={selectedService} onValueChange={setSelectedService}>
                <SelectTrigger className="bg-background/60 border-border/70">
                  <SelectValue placeholder="EXCLUSIVO - PROMOCIONAL" />
                </SelectTrigger>
                 <SelectContent className="max-h-[300px]">
-                  {loading && <SelectItem value="">Carregando...</SelectItem>}
+                   {loading && (
+                     <SelectItem value="__loading__" disabled>
+                       Carregando...
+                     </SelectItem>
+                   )}
                   {filteredServices.map((s) => (
                     <SelectItem key={s.service} value={s.service}>
                       {s.name} - R$ {(parseFloat(s.rate) * 1).toFixed(2)} / 1000
