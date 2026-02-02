@@ -22,10 +22,22 @@
    Bell,
    Coins,
    User,
+  LogOut,
  } from "lucide-react";
  import { Button } from "@/components/ui/button";
 import { LogoutButton } from "@/components/auth/LogoutButton";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
  import { cn } from "@/lib/utils";
+import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
  
  type AppShellProps = {
    brandName: string;
@@ -96,6 +108,13 @@ import { LogoutButton } from "@/components/auth/LogoutButton";
  
  export function AppShell({ brandName, currency }: AppShellProps) {
    const [balance] = useState(1.42);
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    toast.success("Logout realizado");
+    navigate("/login");
+  };
  
    return (
      <SidebarProvider defaultOpen={true}>
@@ -123,11 +142,25 @@ import { LogoutButton } from "@/components/auth/LogoutButton";
                  </span>
                </Button>
  
-               <Button variant="ghost" size="icon">
-                 <User className="h-4 w-4" />
-               </Button>
-
-               <LogoutButton />
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon">
+                      <User className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-48">
+                    <DropdownMenuLabel>Minha Conta</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => navigate("/perfil")}>
+                      <User className="mr-2 h-4 w-4" />
+                      Perfil
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={handleLogout}>
+                      <LogOut className="mr-2 h-4 w-4" />
+                      Sair
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
              </div>
            </header>
  
