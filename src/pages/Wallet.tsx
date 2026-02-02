@@ -1,4 +1,5 @@
  import { useState, useEffect } from "react";
+ import { useNavigate } from "react-router-dom";
  import { supabase } from "@/integrations/supabase/client";
  import { useInstaLuxoAPI } from "@/hooks/useInstaLuxoAPI";
  import { toast } from "sonner";
@@ -21,12 +22,14 @@
    const [walletBalance, setWalletBalance] = useState<number>(0);
    const [userName, setUserName] = useState<string>("usuário");
    const { loading, fetchBalance } = useInstaLuxoAPI();
+  const navigate = useNavigate();
 
    useEffect(() => {
      const loadData = async () => {
        const { data: user } = await supabase.auth.getUser();
        if (!user.user) {
          toast.error("Faça login para ver o saldo");
+        navigate("/login");
          return;
        }
 

@@ -46,7 +46,7 @@ import { Instagram, Music2, Youtube, Facebook, Send, Twitch, MonitorPlay, Shoppi
       const { data } = await supabase.auth.getUser();
       if (!data.user) {
         toast.error("Faça login para criar pedidos");
-        navigate("/");
+        navigate("/login");
         return;
       }
       setUserId(data.user.id);
