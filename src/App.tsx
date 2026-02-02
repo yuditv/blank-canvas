@@ -14,6 +14,7 @@ const WalletPage = lazy(() => import("@/pages/Wallet").then(m => ({ default: m.W
 const FaqPage = lazy(() => import("@/pages/Faq").then(m => ({ default: m.FaqPage })));
 const ResellerPanelPage = lazy(() => import("@/pages/ResellerPanel").then(m => ({ default: m.ResellerPanelPage })));
 const TermsPage = lazy(() => import("@/pages/Terms").then(m => ({ default: m.TermsPage })));
+const AccountPage = lazy(() => import("@/pages/Account").then(m => ({ default: m.AccountPage })));
 const LoginPage = lazy(() => import("@/pages/Login").then(m => ({ default: m.LoginPage })));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
@@ -44,6 +45,7 @@ const App = () => (
               <Route path="/saldo" element={<WalletPage />} />
               <Route path="/painel-revenda" element={<ResellerPanelPage />} />
               <Route path="/termos" element={<TermsPage />} />
+              <Route path="/conta" element={<AccountPage />} />
               <Route path="/ajuda" element={<FaqPage />} />
             </Route>
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
