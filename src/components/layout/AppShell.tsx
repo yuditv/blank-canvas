@@ -1,4 +1,4 @@
- import { useState } from "react";
+ import { useEffect, useMemo, useState } from "react";
  import { Outlet } from "react-router-dom";
  import {
    Sidebar,
@@ -27,7 +27,6 @@
   FileText,
  } from "lucide-react";
  import { Button } from "@/components/ui/button";
-import { LogoutButton } from "@/components/auth/LogoutButton";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -37,9 +36,11 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
  import { cn } from "@/lib/utils";
-import { useNavigate } from "react-router-dom";
+ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+ import { ThemeToggle } from "@/components/theme/ThemeToggle";
  
  type AppShellProps = {
    brandName: string;
@@ -113,6 +114,41 @@ import { toast } from "sonner";
  export function AppShell({ brandName, currency }: AppShellProps) {
    const [balance] = useState(1.42);
   const navigate = useNavigate();
+   const [userEmail, setUserEmail] = useState<string>("");
+   const [userName, setUserName] = useState<string>("");
+   const [avatarUrl, setAvatarUrl] = useState<string>("");
+
+   const initials = useMemo(() => {
+     const n = (userName || userEmail || "U").trim();
+     return n.slice(0, 1).toUpperCase();
+   }, [userName, userEmail]);
+
+   useEffect(() => {
+     let alive = true;
+
+     (async () => {
+       const { data } = await supabase.auth.getUser();
+       if (!alive) return;
+       const u = data.user;
+       const meta = (u?.user_metadata ?? {}) as { name?: string; avatar_url?: string };
+       setUserEmail(u?.email ?? "");
+       setUserName(meta.name ?? "");
+       setAvatarUrl(meta.avatar_url ?? "");
+     })();
+
+     const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
+       const u = session?.user;
+       const meta = (u?.user_metadata ?? {}) as { name?: string; avatar_url?: string };
+       setUserEmail(u?.email ?? "");
+       setUserName(meta.name ?? "");
+       setAvatarUrl(meta.avatar_url ?? "");
+     });
+
+     return () => {
+       alive = false;
+       sub.subscription.unsubscribe();
+     };
+   }, []);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -145,19 +181,24 @@ import { toast } from "sonner";
                    5
                  </span>
                </Button>
+
+                <ThemeToggle />
  
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon">
-                      <User className="h-4 w-4" />
+                    <Button variant="ghost" size="icon" className="rounded-full">
+                      <Avatar className="h-8 w-8">
+                        <AvatarImage src={avatarUrl || undefined} alt="Foto do perfil" />
+                        <AvatarFallback>{initials}</AvatarFallback>
+                      </Avatar>
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-48">
                     <DropdownMenuLabel>Minha Conta</DropdownMenuLabel>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={() => navigate("/perfil")}>
+                    <DropdownMenuItem onClick={() => navigate("/conta")}>
                       <User className="mr-2 h-4 w-4" />
-                      Perfil
+                      Conta
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => navigate("/termos")}>
                       <FileText className="mr-2 h-4 w-4" />
