@@ -1,4 +1,8 @@
- import { useState } from "react";
+ import { useState, useEffect } from "react";
+ import { useNavigate } from "react-router-dom";
+ import { supabase } from "@/integrations/supabase/client";
+ import { useInstaLuxoAPI } from "@/hooks/useInstaLuxoAPI";
+ import { toast } from "sonner";
  import { Card, CardContent, CardHeader } from "@/components/ui/card";
  import { Button } from "@/components/ui/button";
  import { Input } from "@/components/ui/input";
@@ -31,11 +35,98 @@ import { Instagram, Music2, Youtube, Facebook, Send, Twitch, MonitorPlay, Shoppi
    const [quantity, setQuantity] = useState("");
    const [dripFeed, setDripFeed] = useState(false);
  
-   const mockServices = [
-     "Instagram Curtidas Mundial [Máx. 500 mil] [Dia 300 mil] - R$ 1,36 por 1000",
-     "Instagram Visualizações em Vídeo | Reels | 20M - R$ 0,85 por 1000",
-     "TikTok Comentários Mundial [0-1/H] - R$ 12,50 por 1000",
-   ];
+  const navigate = useNavigate();
+  const { loading, fetchServices, createOrder } = useInstaLuxoAPI();
+  const [services, setServices] = useState<any[]>([]);
+  const [filteredServices, setFilteredServices] = useState<any[]>([]);
+  const [userId, setUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const loadUser = async () => {
+      const { data } = await supabase.auth.getUser();
+      if (!data.user) {
+        toast.error("Faça login para criar pedidos");
+        navigate("/");
+        return;
+      }
+      setUserId(data.user.id);
+    };
+    loadUser();
+  }, [navigate]);
+
+  useEffect(() => {
+    const loadServices = async () => {
+      const data = await fetchServices();
+      setServices(data);
+      setFilteredServices(data);
+    };
+    if (userId) loadServices();
+  }, [userId]);
+
+  useEffect(() => {
+    let filtered = services;
+    if (selectedPlatform) {
+      filtered = filtered.filter((s) =>
+        s.category.toLowerCase().includes(selectedPlatform)
+      );
+    }
+    if (serviceSearch) {
+      filtered = filtered.filter((s) =>
+        s.name.toLowerCase().includes(serviceSearch.toLowerCase())
+      );
+    }
+    setFilteredServices(filtered);
+  }, [selectedPlatform, serviceSearch, services]);
+
+  const handleSubmit = async () => {
+    if (!selectedService || !link || !quantity || !userId) {
+      toast.error("Preencha todos os campos");
+      return;
+    }
+
+    const service = services.find((s) => s.service === selectedService);
+    if (!service) return;
+
+    const orderData = await createOrder({
+      service: selectedService,
+      link,
+      quantity,
+    });
+
+    if (!orderData) return;
+
+    // Salvar no Supabase
+    const providerRate = parseFloat(service.rate);
+    const qty = parseInt(quantity);
+    const providerCost = (providerRate * qty) / 1000;
+    const markupPercent = 30; // 30% markup
+    const priceBRL = providerCost * (1 + markupPercent / 100);
+
+    const { error } = await supabase.from("smm_orders").insert({
+      user_id: userId,
+      provider_order_id: orderData.order,
+      service_id: parseInt(service.service),
+      service_name: service.name,
+      link,
+      quantity: qty,
+      provider_cost_brl: providerCost,
+      price_brl: priceBRL,
+      profit_brl: priceBRL - providerCost,
+      markup_percent: markupPercent,
+      credits_spent: priceBRL,
+      status: "pending",
+      meta: {},
+    });
+
+    if (error) {
+      toast.error("Erro ao salvar pedido no banco");
+      console.error(error);
+      return;
+    }
+
+    toast.success("Pedido criado com sucesso!");
+    navigate("/pedidos");
+  };
  
    return (
      <div className="mx-auto max-w-5xl space-y-6">
@@ -105,17 +196,24 @@ import { Instagram, Music2, Youtube, Facebook, Send, Twitch, MonitorPlay, Shoppi
                <SelectTrigger className="bg-background/60 border-border/70">
                  <SelectValue placeholder="EXCLUSIVO - PROMOCIONAL" />
                </SelectTrigger>
-               <SelectContent>
-                 {mockServices.map((s, i) => (
-                   <SelectItem key={i} value={s}>
-                     {s}
-                   </SelectItem>
+                <SelectContent className="max-h-[300px]">
+                  {loading && <SelectItem value="">Carregando...</SelectItem>}
+                  {filteredServices.map((s) => (
+                    <SelectItem key={s.service} value={s.service}>
+                      {s.name} - R$ {(parseFloat(s.rate) * 1).toFixed(2)} / 1000
+                    </SelectItem>
                  ))}
                </SelectContent>
-             </Select>
-           </div>
- 
-           {selectedService && (
+              </Select>
+            </div>
+
+            {(() => {
+              const selectedServiceData = services.find((s) => s.service === selectedService);
+              const calculatedPrice = selectedServiceData
+                ? (parseFloat(selectedServiceData.rate) * (parseFloat(quantity) || 0)) / 1000
+                : 0;
+
+              return selectedService && (
              <>
                <div className="space-y-2">
                  <Label htmlFor="link" className="text-sm flex items-center gap-2">
@@ -163,18 +261,25 @@ import { Instagram, Music2, Youtube, Facebook, Send, Twitch, MonitorPlay, Shoppi
                    <span>💳 Preço:</span>
                  </Label>
                  <div className="rounded-lg border border-primary/30 bg-card/60 p-4">
-                   <p className="text-2xl font-bold text-primary">
-                     R$ {((parseFloat(quantity) || 0) * 0.00136).toFixed(2)}
-                   </p>
+                    <p className="text-2xl font-bold text-primary">R$ {calculatedPrice.toFixed(2)}</p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Serviço: {selectedServiceData?.name}
+                    </p>
                  </div>
                </div>
  
-               <Button variant="success" size="lg" className="w-full">
-                 ENVIAR PEDIDO
-                 <span className="ml-2">›</span>
+                <Button
+                  variant="success"
+                  size="lg"
+                  className="w-full"
+                  onClick={handleSubmit}
+                  disabled={loading}
+                >
+                  {loading ? "ENVIANDO..." : "ENVIAR PEDIDO ›"}
                </Button>
              </>
-           )}
+            );
+            })()}
          </CardContent>
        </Card>
      </div>

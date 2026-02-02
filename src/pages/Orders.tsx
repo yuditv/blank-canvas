@@ -1,4 +1,7 @@
- import { useState } from "react";
+ import { useState, useEffect } from "react";
+ import { supabase } from "@/integrations/supabase/client";
+ import { useInstaLuxoAPI } from "@/hooks/useInstaLuxoAPI";
+ import { toast } from "sonner";
  import { Card, CardHeader, CardContent } from "@/components/ui/card";
  import { Input } from "@/components/ui/input";
  import { Button } from "@/components/ui/button";
@@ -13,46 +16,92 @@
    status: "completed" | "pending" | "canceled";
  };
  
- const mockOrders: Order[] = [
-   {
-     id: "167050",
-     title: "Instagram Visualizações em Vídeo | Reels | 20M 🔥",
-     link: "https://www.instagram.com/reel/DTJYc6dDagU/",
-     date: "2026-02-01 20:11:26",
-     status: "completed",
-   },
-   {
-     id: "167049",
-     title: "Instagram Visualização em Vídeo | 100K 🔥",
-     link: "https://www.instagram.com/p/DTJYc6dDagU/",
-     date: "2026-02-01 20:08:13",
-     status: "completed",
-   },
-   {
-     id: "167044",
-     title: "Tiktok Comentários Mundial [0-1/H]",
-     link: "https://www.tiktok.com/@merlin_adrianavideo/7595199775788535047",
-     date: "2026-02-01 19:29:39",
-     status: "completed",
-   },
-   {
-     id: "167041",
-     title: "Tiktok Comentários Mundial [0-1/H]",
-     link: "https://www.tiktok.com/@merlin_adrianavideo/7583824395785817351",
-     date: "2026-02-01 19:25:19",
-     status: "completed",
-   },
-   {
-     id: "167035",
-     title: "TikTok Comentários Custom [ Max 100K ] | HQ | R365 🔥 | 50K",
-     link: "https://www.tiktok.com/@merlin_adrianavideo/7583820851468930311",
-     date: "2026-02-01 18:01:29",
-     status: "canceled",
-   },
- ];
+  type DBOrder = {
+    id: string;
+    provider_order_id: string | null;
+    service_name: string | null;
+    link: string;
+    created_at: string;
+    status: string;
+    provider_start_count?: number | null;
+    provider_remains?: number | null;
+  };
  
  export function OrdersPage() {
    const [search, setSearch] = useState("");
+   const [orders, setOrders] = useState<DBOrder[]>([]);
+   const { loading, fetchOrderStatus } = useInstaLuxoAPI();
+
+   useEffect(() => {
+     const loadOrders = async () => {
+       const { data: user } = await supabase.auth.getUser();
+       if (!user.user) {
+         toast.error("Faça login para ver pedidos");
+         return;
+       }
+
+       const { data, error } = await supabase
+         .from("smm_orders")
+         .select("*")
+         .eq("user_id", user.user.id)
+         .order("created_at", { ascending: false });
+
+       if (error) {
+         toast.error("Erro ao carregar pedidos");
+         console.error(error);
+         return;
+       }
+
+       setOrders(data || []);
+
+       // Buscar status real da API
+       const externalIds = data?.map((o) => o.provider_order_id).filter(Boolean) || [];
+       if (externalIds.length > 0) {
+         const statuses = await fetchOrderStatus(externalIds);
+         // Atualizar status no DB
+         for (const order of data || []) {
+           const apiStatus = statuses[order.provider_order_id!];
+           if (apiStatus) {
+             await supabase
+               .from("smm_orders")
+               .update({
+                 provider_status: apiStatus.status,
+                 provider_start_count: parseInt(apiStatus.start_count),
+                 provider_remains: parseInt(apiStatus.remains),
+               })
+               .eq("id", order.id);
+           }
+         }
+       }
+     };
+
+     loadOrders();
+   }, []);
+
+   const filteredOrders = orders.filter((o) => {
+     const serviceName = o.service_name || "";
+     return (
+       serviceName.toLowerCase().includes(search.toLowerCase()) ||
+       o.link.toLowerCase().includes(search.toLowerCase())
+     );
+   });
+
+   const getStatusBadge = (status: string) => {
+     switch (status) {
+       case "Completed":
+       case "completed":
+         return <Badge className="bg-success text-success-foreground">CONCLUÍDO</Badge>;
+       case "Pending":
+       case "pending":
+       case "In progress":
+         return <Badge variant="secondary">PENDENTE</Badge>;
+       case "Canceled":
+       case "canceled":
+         return <Badge variant="destructive">CANCELADO</Badge>;
+       default:
+         return <Badge variant="outline">{status}</Badge>;
+     }
+   };
  
    return (
      <div className="mx-auto max-w-6xl space-y-4">
@@ -79,8 +128,9 @@
          </CardHeader>
        </Card>
  
-       <div className="space-y-3">
-         {mockOrders.map((order) => (
+        {loading && <p className="text-center text-muted-foreground">Carregando...</p>}
+        <div className="space-y-3">
+          {filteredOrders.map((order) => (
            <Card
              key={order.id}
              className="panel-glass border-border/70 hover:border-primary/30 transition-all"
@@ -93,26 +143,18 @@
                        variant="outline"
                        className="border-success/50 bg-success/10 text-success font-mono"
                      >
-                       {order.id}
+                        {order.provider_order_id || order.id.slice(0, 8)}
                      </Badge>
-                     <h3 className="font-medium">{order.title}</h3>
+                      <h3 className="font-medium">{order.service_name || "Serviço"}</h3>
                    </div>
                    <p className="text-sm text-muted-foreground truncate">{order.link}</p>
                  </div>
  
                  <div className="flex items-center gap-3">
-                   <time className="text-sm text-muted-foreground whitespace-nowrap">
-                     {order.date}
-                   </time>
-                   {order.status === "completed" && (
-                     <Badge className="bg-success text-success-foreground">CONCLUÍDO</Badge>
-                   )}
-                   {order.status === "pending" && (
-                     <Badge variant="secondary">PENDENTE</Badge>
-                   )}
-                   {order.status === "canceled" && (
-                     <Badge variant="destructive">CANCELADO</Badge>
-                   )}
+                    <time className="text-sm text-muted-foreground whitespace-nowrap hidden md:block">
+                      {new Date(order.created_at).toLocaleString("pt-BR")}
+                    </time>
+                    {getStatusBadge(order.status)}
                    <Button variant="default" size="icon">
                      ⋮
                    </Button>
