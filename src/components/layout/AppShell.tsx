@@ -25,6 +25,7 @@
   LogOut,
   Store,
   FileText,
+   Settings,
  } from "lucide-react";
  import { Button } from "@/components/ui/button";
  import { AuroraBackground } from "@/components/layout/AuroraBackground";
@@ -49,7 +50,7 @@ import { toast } from "sonner";
    currency: "BRL" | "USD";
  };
  
- const routes = [
+  const baseRoutes = [
    { path: "/", icon: ShoppingCart, label: "Fazer Novo Pedido" },
    { path: "/pedidos", icon: History, label: "Histórico de Pedido" },
    { path: "/saldo", icon: Wallet, label: "Adicionar Saldo" },
@@ -57,8 +58,10 @@ import { toast } from "sonner";
   { path: "/termos", icon: FileText, label: "Termos" },
    { path: "/ajuda", icon: HelpCircle, label: "FAQ" },
  ];
+
+  type RouteItem = (typeof baseRoutes)[number];
  
- function AppSidebarContent() {
+  function AppSidebarContent({ routes }: { routes: RouteItem[] }) {
    const { state } = useSidebar();
    const collapsed = state === "collapsed";
  
@@ -113,6 +116,7 @@ import { toast } from "sonner";
    const [userEmail, setUserEmail] = useState<string>("");
    const [userName, setUserName] = useState<string>("");
    const [avatarUrl, setAvatarUrl] = useState<string>("");
+    const [isAdmin, setIsAdmin] = useState(false);
 
    const initials = useMemo(() => {
      const n = (userName || userEmail || "U").trim();
@@ -130,6 +134,14 @@ import { toast } from "sonner";
        setUserEmail(u?.email ?? "");
        setUserName(meta.name ?? "");
        setAvatarUrl(meta.avatar_url ?? "");
+
+        if (u?.id) {
+          const { data: adminData } = await supabase.rpc("is_admin", { _user_id: u.id });
+          if (!alive) return;
+          setIsAdmin(!!adminData);
+        } else {
+          setIsAdmin(false);
+        }
      })();
 
      const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -138,6 +150,19 @@ import { toast } from "sonner";
        setUserEmail(u?.email ?? "");
        setUserName(meta.name ?? "");
        setAvatarUrl(meta.avatar_url ?? "");
+
+        if (u?.id) {
+          void (async () => {
+            try {
+              const { data: adminData } = await supabase.rpc("is_admin", { _user_id: u.id });
+              setIsAdmin(!!adminData);
+            } catch {
+              setIsAdmin(false);
+            }
+          })();
+        } else {
+          setIsAdmin(false);
+        }
      });
 
      return () => {
@@ -151,12 +176,18 @@ import { toast } from "sonner";
     toast.success("Logout realizado");
     navigate("/login");
   };
+
+    const routes = useMemo<RouteItem[]>(() => {
+      return isAdmin
+        ? [...baseRoutes, { path: "/admin/markup", icon: Settings, label: "Markup (Admin)" } as RouteItem]
+        : baseRoutes;
+    }, [isAdmin]);
  
    return (
      <SidebarProvider defaultOpen={true}>
         <AuroraBackground>
           <div className="flex min-h-screen w-full">
-            <AppSidebarContent />
+             <AppSidebarContent routes={routes} />
 
             <div className="flex-1 flex flex-col">
               <header className="h-14 border-b border-border flex items-center justify-between px-4 panel-glass animate-fade-in">
