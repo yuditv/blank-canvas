@@ -360,9 +360,11 @@ export function NewOrderPage() {
                      <div key={platformId}>
                        {!selectedPlatform && (
                          <>
-                           <SelectLabel className="text-xs text-muted-foreground">
-                             {getPlatformLabel(platformId)}
-                           </SelectLabel>
+                            <SelectItem value={`__platform_${platformId}`} disabled>
+                              <span className="text-xs text-muted-foreground">
+                                {getPlatformLabel(platformId)}
+                              </span>
+                            </SelectItem>
                            <SelectSeparator />
                          </>
                        )}
