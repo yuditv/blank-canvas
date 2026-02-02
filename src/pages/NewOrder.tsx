@@ -11,7 +11,10 @@ import { memo } from "react";
  import {
    Select,
    SelectContent,
+    SelectGroup,
    SelectItem,
+    SelectLabel,
+    SelectSeparator,
    SelectTrigger,
    SelectValue,
  } from "@/components/ui/select";
@@ -90,9 +93,50 @@ export function NewOrderPage() {
   const { loading, fetchServices, createOrder } = useInstaLuxoAPI();
   const [services, setServices] = useState<any[]>([]);
   const [filteredServices, setFilteredServices] = useState<any[]>([]);
+  const [groupedServices, setGroupedServices] = useState<Record<string, Record<string, any[]>>>({});
   const [userId, setUserId] = useState<string | null>(null);
   const [totalOrders, setTotalOrders] = useState<number>(0);
   const [markupRules, setMarkupRules] = useState<any[]>([]);
+
+  const detectPlatformId = (service: any): string => {
+    const hay = `${service?.category ?? ""} ${service?.name ?? ""}`.toLowerCase();
+    if (hay.includes("instagram")) return "instagram";
+    if (hay.includes("tiktok")) return "tiktok";
+    if (hay.includes("youtube")) return "youtube";
+    if (hay.includes("facebook")) return "facebook";
+    if (hay.includes("telegram")) return "telegram";
+    if (hay.includes("twitch")) return "twitch";
+    if (hay.includes("discord")) return "discord";
+    return "outros";
+  };
+
+  const getPlatformLabel = (platformId: string) =>
+    socialPlatforms.find((p) => p.id === platformId)?.label ?? "Outros";
+
+  const groupServices = (list: any[]) => {
+    const grouped: Record<string, Record<string, any[]>> = {};
+    for (const s of list) {
+      const platformId = detectPlatformId(s);
+      const category = String(s?.category ?? "Sem categoria").trim() || "Sem categoria";
+      grouped[platformId] ||= {};
+      grouped[platformId][category] ||= [];
+      grouped[platformId][category].push(s);
+    }
+
+    const platformOrder = [...socialPlatforms.map((p) => p.id), "outros"];
+    const ordered: Record<string, Record<string, any[]>> = {};
+    for (const pid of platformOrder) {
+      if (!grouped[pid]) continue;
+      const categories = Object.keys(grouped[pid]).sort((a, b) => a.localeCompare(b, "pt-BR"));
+      ordered[pid] = {};
+      for (const c of categories) {
+        ordered[pid][c] = grouped[pid][c]
+          .slice()
+          .sort((a, b) => String(a.name).localeCompare(String(b.name), "pt-BR"));
+      }
+    }
+    return ordered;
+  };
 
   useEffect(() => {
     const loadUser = async () => {
@@ -163,16 +207,14 @@ export function NewOrderPage() {
   useEffect(() => {
     let filtered = services;
     if (selectedPlatform) {
-      filtered = filtered.filter((s) =>
-        s.category.toLowerCase().includes(selectedPlatform)
-      );
+      filtered = filtered.filter((s) => detectPlatformId(s) === selectedPlatform);
     }
     if (serviceSearch) {
-      filtered = filtered.filter((s) =>
-        s.name.toLowerCase().includes(serviceSearch.toLowerCase())
-      );
+      const q = serviceSearch.toLowerCase();
+      filtered = filtered.filter((s) => `${s.name ?? ""} ${s.category ?? ""}`.toLowerCase().includes(q));
     }
     setFilteredServices(filtered);
+    setGroupedServices(groupServices(filtered));
   }, [selectedPlatform, serviceSearch, services]);
 
   const handleSubmit = async () => {
@@ -301,18 +343,45 @@ export function NewOrderPage() {
                <SelectTrigger className="bg-background/60 border-border/70">
                  <SelectValue placeholder="EXCLUSIVO - PROMOCIONAL" />
                </SelectTrigger>
-                <SelectContent className="max-h-[300px]">
+                 <SelectContent className="max-h-[300px]">
                    {loading && (
                      <SelectItem value="__loading__" disabled>
                        Carregando...
                      </SelectItem>
                    )}
-                  {filteredServices.map((s) => (
-                    <SelectItem key={s.service} value={s.service}>
-                      {s.name} - R$ {(parseFloat(s.rate) * 1).toFixed(2)} / 1000
-                    </SelectItem>
-                 ))}
-               </SelectContent>
+
+                   {!loading && filteredServices.length === 0 && (
+                     <SelectItem value="__empty__" disabled>
+                       Nenhum serviço encontrado
+                     </SelectItem>
+                   )}
+
+                   {Object.entries(groupedServices).map(([platformId, categories], platformIdx) => (
+                     <div key={platformId}>
+                       {!selectedPlatform && (
+                         <>
+                           <SelectLabel className="text-xs text-muted-foreground">
+                             {getPlatformLabel(platformId)}
+                           </SelectLabel>
+                           <SelectSeparator />
+                         </>
+                       )}
+
+                       {Object.entries(categories).map(([category, items]) => (
+                         <SelectGroup key={`${platformId}:${category}`}>
+                           <SelectLabel className="text-xs">{category}</SelectLabel>
+                           {items.map((s) => (
+                             <SelectItem key={s.service} value={String(s.service)}>
+                               {s.name} — R$ {Number(s.rate).toFixed(2)} / 1000
+                             </SelectItem>
+                           ))}
+                         </SelectGroup>
+                       ))}
+
+                       {platformIdx < Object.keys(groupedServices).length - 1 && <SelectSeparator />}
+                     </div>
+                   ))}
+                 </SelectContent>
               </Select>
             </div>
 
