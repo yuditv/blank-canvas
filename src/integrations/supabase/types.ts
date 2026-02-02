@@ -2315,6 +2315,51 @@ export type Database = {
         }
         Relationships: []
       }
+      mercado_pago_payments: {
+        Row: {
+          amount_brl: number
+          created_at: string
+          external_reference: string | null
+          id: string
+          metadata: Json | null
+          paid_at: string | null
+          payment_id: string | null
+          qr_code: string | null
+          qr_code_base64: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount_brl: number
+          created_at?: string
+          external_reference?: string | null
+          id?: string
+          metadata?: Json | null
+          paid_at?: string | null
+          payment_id?: string | null
+          qr_code?: string | null
+          qr_code_base64?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount_brl?: number
+          created_at?: string
+          external_reference?: string | null
+          id?: string
+          metadata?: Json | null
+          paid_at?: string | null
+          payment_id?: string | null
+          qr_code?: string | null
+          qr_code_base64?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       message_templates: {
         Row: {
           content: string
