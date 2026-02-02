@@ -2873,6 +2873,39 @@ export type Database = {
         }
         Relationships: []
       }
+      smm_markup_rules: {
+        Row: {
+          category_pattern: string | null
+          created_at: string
+          fee_fixed_brl: number
+          id: string
+          is_active: boolean
+          markup_percent: number
+          service_id: number | null
+          updated_at: string
+        }
+        Insert: {
+          category_pattern?: string | null
+          created_at?: string
+          fee_fixed_brl?: number
+          id?: string
+          is_active?: boolean
+          markup_percent?: number
+          service_id?: number | null
+          updated_at?: string
+        }
+        Update: {
+          category_pattern?: string | null
+          created_at?: string
+          fee_fixed_brl?: number
+          id?: string
+          is_active?: boolean
+          markup_percent?: number
+          service_id?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       smm_orders: {
         Row: {
           cancelled_at: string | null
