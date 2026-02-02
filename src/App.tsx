@@ -8,6 +8,7 @@ import { NewOrderPage } from "@/pages/NewOrder";
 import { OrdersPage } from "@/pages/Orders";
 import { WalletPage } from "@/pages/Wallet";
 import { FaqPage } from "@/pages/Faq";
+import { LoginPage } from "@/pages/Login";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -19,6 +20,7 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
+          <Route path="/login" element={<LoginPage />} />
           <Route element={<AppShell brandName="SamyLuxo" currency="BRL" />}>
             <Route path="/" element={<NewOrderPage />} />
             <Route path="/pedidos" element={<OrdersPage />} />

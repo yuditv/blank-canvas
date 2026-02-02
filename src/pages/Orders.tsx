@@ -1,4 +1,5 @@
  import { useState, useEffect } from "react";
+ import { useNavigate } from "react-router-dom";
  import { supabase } from "@/integrations/supabase/client";
  import { useInstaLuxoAPI } from "@/hooks/useInstaLuxoAPI";
  import { toast } from "sonner";
@@ -31,12 +32,14 @@
    const [search, setSearch] = useState("");
    const [orders, setOrders] = useState<DBOrder[]>([]);
    const { loading, fetchOrderStatus } = useInstaLuxoAPI();
+  const navigate = useNavigate();
 
    useEffect(() => {
      const loadOrders = async () => {
        const { data: user } = await supabase.auth.getUser();
        if (!user.user) {
          toast.error("Faça login para ver pedidos");
+        navigate("/login");
          return;
        }
 
