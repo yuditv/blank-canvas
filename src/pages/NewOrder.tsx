@@ -15,7 +15,7 @@
    SelectValue,
  } from "@/components/ui/select";
  import { Checkbox } from "@/components/ui/checkbox";
-import { Instagram, Music2, Youtube, Facebook, Send, Twitch, MonitorPlay, ShoppingCart } from "lucide-react";
+import { Instagram, Music2, Youtube, Facebook, Send, Twitch, MonitorPlay, ShoppingCart, Package, Wallet as WalletIcon, Lightbulb } from "lucide-react";
  
  const socialPlatforms = [
    { id: "instagram", icon: Instagram, label: "Instagram", color: "text-pink-500" },
@@ -40,6 +40,7 @@ import { Instagram, Music2, Youtube, Facebook, Send, Twitch, MonitorPlay, Shoppi
   const [services, setServices] = useState<any[]>([]);
   const [filteredServices, setFilteredServices] = useState<any[]>([]);
   const [userId, setUserId] = useState<string | null>(null);
+  const [totalOrders, setTotalOrders] = useState<number>(0);
 
   useEffect(() => {
     const loadUser = async () => {
@@ -53,6 +54,18 @@ import { Instagram, Music2, Youtube, Facebook, Send, Twitch, MonitorPlay, Shoppi
     };
     loadUser();
   }, [navigate]);
+
+  useEffect(() => {
+    const loadOrdersCount = async () => {
+      if (!userId) return;
+      const { count } = await supabase
+        .from("smm_orders")
+        .select("*", { count: "exact", head: true })
+        .eq("user_id", userId);
+      setTotalOrders(count || 0);
+    };
+    if (userId) loadOrdersCount();
+  }, [userId]);
 
   useEffect(() => {
     const loadServices = async () => {
@@ -130,6 +143,53 @@ import { Instagram, Music2, Youtube, Facebook, Send, Twitch, MonitorPlay, Shoppi
  
    return (
      <div className="mx-auto max-w-5xl space-y-6">
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <Card className="panel-glass border-primary/30 bg-gradient-to-br from-card/80 to-card/40">
+          <CardContent className="p-6 space-y-2">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
+                  <Package className="h-4 w-4" />
+                  TOTAL DE PEDIDOS
+                </div>
+                <div className="text-4xl font-bold text-primary">
+                  {totalOrders.toLocaleString("pt-BR")}
+                </div>
+                <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
+                  ✓ Pedidos Enviados ✓
+                </p>
+              </div>
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/20">
+                <Package className="h-6 w-6 text-primary" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="panel-glass border-primary/30 bg-gradient-to-br from-card/80 to-card/40">
+          <CardContent className="p-6 space-y-3">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/20">
+                <Lightbulb className="h-5 w-5 text-primary" />
+              </div>
+            </div>
+            <p className="text-sm font-medium leading-relaxed">
+              ⭐ Você pode testar nossos serviços com apenas R$ 1,00 ⭐
+            </p>
+            <Button
+              variant="default"
+              className="w-full bg-success hover:bg-success/90 text-white font-semibold"
+              onClick={() => navigate("/saldo")}
+            >
+              <WalletIcon className="mr-2 h-4 w-4" />
+              ADICIONAR SALDO
+              <span className="ml-2">›</span>
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+
        <Card className="panel-glass border-primary/20">
          <CardHeader className="border-b border-border/60 pb-4">
            <div className="flex items-center gap-3">
