@@ -1,4 +1,5 @@
  import { useState, useEffect } from "react";
+import { memo } from "react";
  import { useNavigate } from "react-router-dom";
  import { supabase } from "@/integrations/supabase/client";
  import { useInstaLuxoAPI } from "@/hooks/useInstaLuxoAPI";
@@ -27,7 +28,57 @@ import { Instagram, Music2, Youtube, Facebook, Send, Twitch, MonitorPlay, Shoppi
    { id: "discord", icon: MonitorPlay, label: "Discord", color: "text-indigo-500" },
  ];
  
- export function NewOrderPage() {
+const StatsCards = memo(({ totalOrders, onNavigate }: { totalOrders: number; onNavigate: () => void }) => (
+  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <Card className="panel-glass border-primary/30 bg-gradient-to-br from-card/80 to-card/40">
+      <CardContent className="p-6 space-y-2">
+        <div className="flex items-center justify-between">
+          <div>
+            <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
+              <Package className="h-4 w-4" />
+              TOTAL DE PEDIDOS
+            </div>
+            <div className="text-4xl font-bold text-primary">
+              {totalOrders.toLocaleString("pt-BR")}
+            </div>
+            <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
+              ✓ Pedidos Enviados ✓
+            </p>
+          </div>
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/20">
+            <Package className="h-6 w-6 text-primary" />
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+
+    <Card className="panel-glass border-primary/30 bg-gradient-to-br from-card/80 to-card/40">
+      <CardContent className="p-6 space-y-3">
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/20">
+            <Lightbulb className="h-5 w-5 text-primary" />
+          </div>
+        </div>
+        <p className="text-sm font-medium leading-relaxed">
+          ⭐ Você pode testar nossos serviços com apenas R$ 1,00 ⭐
+        </p>
+        <Button
+          variant="default"
+          className="w-full bg-success hover:bg-success/90 text-white font-semibold"
+          onClick={onNavigate}
+        >
+          <WalletIcon className="mr-2 h-4 w-4" />
+          ADICIONAR SALDO
+          <span className="ml-2">›</span>
+        </Button>
+      </CardContent>
+    </Card>
+  </div>
+));
+
+StatsCards.displayName = "StatsCards";
+
+export function NewOrderPage() {
    const [selectedPlatform, setSelectedPlatform] = useState("");
    const [serviceSearch, setServiceSearch] = useState("");
    const [selectedService, setSelectedService] = useState("");
@@ -64,7 +115,7 @@ import { Instagram, Music2, Youtube, Facebook, Send, Twitch, MonitorPlay, Shoppi
         .eq("user_id", userId);
       setTotalOrders(count || 0);
     };
-    if (userId) loadOrdersCount();
+    loadOrdersCount();
   }, [userId]);
 
   useEffect(() => {
@@ -143,52 +194,7 @@ import { Instagram, Music2, Youtube, Facebook, Send, Twitch, MonitorPlay, Shoppi
  
    return (
      <div className="mx-auto max-w-5xl space-y-6">
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Card className="panel-glass border-primary/30 bg-gradient-to-br from-card/80 to-card/40">
-          <CardContent className="p-6 space-y-2">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
-                  <Package className="h-4 w-4" />
-                  TOTAL DE PEDIDOS
-                </div>
-                <div className="text-4xl font-bold text-primary">
-                  {totalOrders.toLocaleString("pt-BR")}
-                </div>
-                <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
-                  ✓ Pedidos Enviados ✓
-                </p>
-              </div>
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/20">
-                <Package className="h-6 w-6 text-primary" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="panel-glass border-primary/30 bg-gradient-to-br from-card/80 to-card/40">
-          <CardContent className="p-6 space-y-3">
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/20">
-                <Lightbulb className="h-5 w-5 text-primary" />
-              </div>
-            </div>
-            <p className="text-sm font-medium leading-relaxed">
-              ⭐ Você pode testar nossos serviços com apenas R$ 1,00 ⭐
-            </p>
-            <Button
-              variant="default"
-              className="w-full bg-success hover:bg-success/90 text-white font-semibold"
-              onClick={() => navigate("/saldo")}
-            >
-              <WalletIcon className="mr-2 h-4 w-4" />
-              ADICIONAR SALDO
-              <span className="ml-2">›</span>
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
+      <StatsCards totalOrders={totalOrders} onNavigate={() => navigate("/saldo")} />
 
        <Card className="panel-glass border-primary/20">
          <CardHeader className="border-b border-border/60 pb-4">

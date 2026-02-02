@@ -24,6 +24,7 @@
    User,
   LogOut,
   Store,
+  FileText,
  } from "lucide-react";
  import { Button } from "@/components/ui/button";
 import { LogoutButton } from "@/components/auth/LogoutButton";
@@ -50,6 +51,7 @@ import { toast } from "sonner";
    { path: "/pedidos", icon: History, label: "Histórico de Pedido" },
    { path: "/saldo", icon: Wallet, label: "Adicionar Saldo" },
   { path: "/painel-revenda", icon: Store, label: "Painel de Revenda" },
+  { path: "/termos", icon: FileText, label: "Termos" },
    { path: "/ajuda", icon: HelpCircle, label: "FAQ" },
  ];
  
@@ -156,6 +158,10 @@ import { toast } from "sonner";
                     <DropdownMenuItem onClick={() => navigate("/perfil")}>
                       <User className="mr-2 h-4 w-4" />
                       Perfil
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate("/termos")}>
+                      <FileText className="mr-2 h-4 w-4" />
+                      Termos de Uso
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={handleLogout}>
                       <LogOut className="mr-2 h-4 w-4" />
