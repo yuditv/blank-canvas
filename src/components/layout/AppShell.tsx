@@ -22,7 +22,6 @@
    Bell,
    Coins,
    User,
-    Settings,
  } from "lucide-react";
  import { Button } from "@/components/ui/button";
 import { LogoutButton } from "@/components/auth/LogoutButton";
@@ -37,7 +36,6 @@ import { LogoutButton } from "@/components/auth/LogoutButton";
    { path: "/", icon: ShoppingCart, label: "Fazer Novo Pedido" },
    { path: "/pedidos", icon: History, label: "Histórico de Pedido" },
    { path: "/saldo", icon: Wallet, label: "Adicionar Saldo" },
-    { path: "/configuracoes", icon: Settings, label: "Configurações" },
    { path: "/ajuda", icon: HelpCircle, label: "FAQ" },
  ];
  

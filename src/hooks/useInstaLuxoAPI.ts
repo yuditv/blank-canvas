@@ -2,8 +2,6 @@
  import { supabase } from "@/integrations/supabase/client";
  import { toast } from "sonner";
  
- const INSTALUXO_BASE_URL = "https://instaluxo.com/api/v2";
- 
  type InstaLuxoService = {
    service: string;
    name: string;
@@ -29,38 +27,20 @@
  
  export function useInstaLuxoAPI() {
    const [loading, setLoading] = useState(false);
- 
-   const getApiKey = async (): Promise<string | null> => {
-     const { data, error } = await supabase
-       .from("pricing_settings")
-       .select("instaluxo_api_key")
-       .single();
- 
-     if (error || !data?.instaluxo_api_key) {
-       toast.error("Chave API não configurada. Configure em Configurações.");
-       return null;
-     }
-     return data.instaluxo_api_key;
-   };
+
+  const callProxy = async <T,>(body: Record<string, unknown>): Promise<T> => {
+    const { data, error } = await supabase.functions.invoke<T>("instaluxo-proxy", {
+      body,
+    });
+
+    if (error) throw error;
+    return data as T;
+  };
  
    const fetchServices = async (): Promise<InstaLuxoService[]> => {
      setLoading(true);
      try {
-       const apiKey = await getApiKey();
-       if (!apiKey) return [];
- 
-       const formData = new URLSearchParams();
-       formData.append("key", apiKey);
-       formData.append("action", "services");
- 
-       const response = await fetch(INSTALUXO_BASE_URL, {
-         method: "POST",
-         headers: { "Content-Type": "application/x-www-form-urlencoded" },
-         body: formData.toString(),
-       });
- 
-       if (!response.ok) throw new Error("Erro ao buscar serviços");
-       return await response.json();
+      return await callProxy<InstaLuxoService[]>({ action: "services" });
      } catch (error) {
        toast.error("Erro ao carregar serviços da API");
        console.error(error);
@@ -73,21 +53,7 @@
    const fetchBalance = async (): Promise<InstaLuxoBalance | null> => {
      setLoading(true);
      try {
-       const apiKey = await getApiKey();
-       if (!apiKey) return null;
- 
-       const formData = new URLSearchParams();
-       formData.append("key", apiKey);
-       formData.append("action", "balance");
- 
-       const response = await fetch(INSTALUXO_BASE_URL, {
-         method: "POST",
-         headers: { "Content-Type": "application/x-www-form-urlencoded" },
-         body: formData.toString(),
-       });
- 
-       if (!response.ok) throw new Error("Erro ao buscar saldo");
-       return await response.json();
+      return await callProxy<InstaLuxoBalance>({ action: "balance" });
      } catch (error) {
        toast.error("Erro ao carregar saldo da API");
        console.error(error);
@@ -104,24 +70,12 @@
    }): Promise<{ order: string } | null> => {
      setLoading(true);
      try {
-       const apiKey = await getApiKey();
-       if (!apiKey) return null;
- 
-       const formData = new URLSearchParams();
-       formData.append("key", apiKey);
-       formData.append("action", "add");
-       formData.append("service", params.service);
-       formData.append("link", params.link);
-       formData.append("quantity", params.quantity);
- 
-       const response = await fetch(INSTALUXO_BASE_URL, {
-         method: "POST",
-         headers: { "Content-Type": "application/x-www-form-urlencoded" },
-         body: formData.toString(),
-       });
- 
-       if (!response.ok) throw new Error("Erro ao criar pedido");
-       const data = await response.json();
+      const data = await callProxy<{ order: string }>({
+        action: "add",
+        service: params.service,
+        link: params.link,
+        quantity: params.quantity,
+      });
        toast.success(`Pedido criado: ${data.order}`);
        return data;
      } catch (error) {
@@ -138,22 +92,10 @@
    ): Promise<Record<string, InstaLuxoOrderStatus>> => {
      setLoading(true);
      try {
-       const apiKey = await getApiKey();
-       if (!apiKey) return {};
- 
-       const formData = new URLSearchParams();
-       formData.append("key", apiKey);
-       formData.append("action", "status");
-       formData.append("orders", orderIds.join(","));
- 
-       const response = await fetch(INSTALUXO_BASE_URL, {
-         method: "POST",
-         headers: { "Content-Type": "application/x-www-form-urlencoded" },
-         body: formData.toString(),
-       });
- 
-       if (!response.ok) throw new Error("Erro ao buscar status");
-       return await response.json();
+      return await callProxy<Record<string, InstaLuxoOrderStatus>>({
+        action: "status",
+        orders: orderIds.join(","),
+      });
      } catch (error) {
        toast.error("Erro ao buscar status dos pedidos");
        console.error(error);
