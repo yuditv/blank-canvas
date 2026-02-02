@@ -15,7 +15,8 @@
    SelectValue,
  } from "@/components/ui/select";
  import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
- import { Wallet as WalletIcon, CreditCard, Info } from "lucide-react";
+import { Wallet as WalletIcon, CreditCard, Info, Copy, Check } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
  
  export function WalletPage() {
    const [apiBalance, setApiBalance] = useState<string | null>(null);
@@ -23,6 +24,10 @@
    const [userName, setUserName] = useState<string>("usuário");
    const { loading, fetchBalance } = useInstaLuxoAPI();
   const navigate = useNavigate();
+  const [amount, setAmount] = useState("");
+  const [pixPayment, setPixPayment] = useState<any>(null);
+  const [loadingPix, setLoadingPix] = useState(false);
+  const [copied, setCopied] = useState(false);
 
    useEffect(() => {
      const loadData = async () => {
@@ -59,6 +64,39 @@
      loadData();
    }, []);
 
+  const handleCreatePixPayment = async () => {
+    if (!amount || parseFloat(amount) < 1) {
+      toast.error("Valor mínimo: R$ 1,00");
+      return;
+    }
+
+    setLoadingPix(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("mercado-pago-create-pix", {
+        body: { amount: parseFloat(amount) },
+      });
+
+      if (error) throw error;
+
+      setPixPayment(data);
+      toast.success("PIX gerado com sucesso!");
+    } catch (error: any) {
+      console.error(error);
+      toast.error(error.message || "Erro ao gerar PIX");
+    } finally {
+      setLoadingPix(false);
+    }
+  };
+
+  const handleCopyPix = async () => {
+    if (pixPayment?.qr_code) {
+      await navigator.clipboard.writeText(pixPayment.qr_code);
+      setCopied(true);
+      toast.success("PIX copiado!");
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
    return (
      <div className="mx-auto max-w-4xl space-y-6">
        <Card className="panel-glass border-primary/20">
@@ -81,6 +119,65 @@
              </TabsList>
  
              <TabsContent value="add" className="space-y-6">
+                {pixPayment ? (
+                  <Card className="bg-card/40 border-primary/30">
+                    <CardContent className="p-6 space-y-4">
+                      <div className="text-center space-y-2">
+                        <h3 className="text-lg font-semibold text-primary">PIX Gerado</h3>
+                        <p className="text-sm text-muted-foreground">
+                          Escaneie o QR Code ou copie o código PIX
+                        </p>
+                      </div>
+
+                      {pixPayment.qr_code_base64 && (
+                        <div className="flex justify-center">
+                          <img
+                            src={`data:image/png;base64,${pixPayment.qr_code_base64}`}
+                            alt="QR Code PIX"
+                            className="max-w-xs rounded-lg border border-border/60"
+                          />
+                        </div>
+                      )}
+
+                      {pixPayment.qr_code && (
+                        <div className="space-y-2">
+                          <Label className="text-sm">Código PIX (Copia e Cola)</Label>
+                          <div className="flex gap-2">
+                            <Input
+                              value={pixPayment.qr_code}
+                              readOnly
+                              className="bg-background/60 font-mono text-xs"
+                            />
+                            <Button variant="outline" size="icon" onClick={handleCopyPix}>
+                              {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+
+                      <div className="text-center space-y-1">
+                        <p className="text-2xl font-bold text-primary">
+                          R$ {pixPayment.amount.toFixed(2)}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          Pagamento detectado automaticamente após confirmação
+                        </p>
+                      </div>
+
+                      <Button
+                        variant="outline"
+                        className="w-full"
+                        onClick={() => {
+                          setPixPayment(null);
+                          setAmount("");
+                        }}
+                      >
+                        Gerar Novo PIX
+                      </Button>
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <>
                <div className="space-y-2">
                  <Label className="text-sm flex items-center gap-2">
                    <span>💳 1º - Escolha um método de pagamento</span>
@@ -147,16 +244,26 @@
                  <Input
                    id="amount"
                    type="number"
+                    value={amount}
+                    onChange={(e) => setAmount(e.target.value)}
                    placeholder="Valor mínimo: R$1,00"
                    className="bg-background/60 border-border/70"
                  />
                </div>
  
-               <Button variant="success" size="lg" className="w-full">
+                <Button
+                  variant="success"
+                  size="lg"
+                  className="w-full"
+                  onClick={handleCreatePixPayment}
+                  disabled={loadingPix}
+                >
                  <WalletIcon className="mr-2 h-5 w-5" />
-                 PAGAR
+                  {loadingPix ? "GERANDO PIX..." : "PAGAR"}
                  <span className="ml-2">›</span>
                </Button>
+                  </>
+                )}
              </TabsContent>
  
              <TabsContent value="history">
