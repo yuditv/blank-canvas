@@ -16,6 +16,7 @@ const ResellerPanelPage = lazy(() => import("@/pages/ResellerPanel").then(m => (
 const TermsPage = lazy(() => import("@/pages/Terms").then(m => ({ default: m.TermsPage })));
 const AccountPage = lazy(() => import("@/pages/Account").then(m => ({ default: m.AccountPage })));
 const LoginPage = lazy(() => import("@/pages/Login").then(m => ({ default: m.LoginPage })));
+const AdminMarkupPage = lazy(() => import("@/pages/AdminMarkup").then(m => ({ default: m.AdminMarkupPage })));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient();
@@ -46,6 +47,7 @@ const App = () => (
               <Route path="/painel-revenda" element={<ResellerPanelPage />} />
               <Route path="/termos" element={<TermsPage />} />
               <Route path="/conta" element={<AccountPage />} />
+              <Route path="/admin/markup" element={<AdminMarkupPage />} />
               <Route path="/ajuda" element={<FaqPage />} />
             </Route>
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

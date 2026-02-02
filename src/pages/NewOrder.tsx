@@ -92,6 +92,7 @@ export function NewOrderPage() {
   const [filteredServices, setFilteredServices] = useState<any[]>([]);
   const [userId, setUserId] = useState<string | null>(null);
   const [totalOrders, setTotalOrders] = useState<number>(0);
+  const [markupRules, setMarkupRules] = useState<any[]>([]);
 
   useEffect(() => {
     const loadUser = async () => {
@@ -126,6 +127,38 @@ export function NewOrderPage() {
     };
     if (userId) loadServices();
   }, [userId]);
+
+  useEffect(() => {
+    const loadMarkupRules = async () => {
+      const { data, error } = await supabase
+        .from("smm_markup_rules")
+        .select("*")
+        .eq("is_active", true);
+      if (error) {
+        console.error(error);
+        return;
+      }
+      setMarkupRules(data ?? []);
+    };
+    if (userId) void loadMarkupRules();
+  }, [userId]);
+
+  const getAppliedRule = (service: any) => {
+    if (!service) return null;
+
+    // Priority 1: exact service_id match
+    const byService = markupRules.find((r) => Number(r.service_id) === Number(service.service));
+    if (byService) return byService;
+
+    // Priority 2: category pattern match (contains)
+    const category = String(service.category ?? "").toLowerCase();
+    const byCategory = markupRules.find((r) => {
+      const p = String(r.category_pattern ?? "").trim().toLowerCase();
+      if (!p) return false;
+      return category.includes(p);
+    });
+    return byCategory ?? null;
+  };
 
   useEffect(() => {
     let filtered = services;
@@ -163,8 +196,11 @@ export function NewOrderPage() {
     const providerRate = parseFloat(service.rate);
     const qty = parseInt(quantity);
     const providerCost = (providerRate * qty) / 1000;
-    const markupPercent = 30; // 30% markup
-    const priceBRL = providerCost * (1 + markupPercent / 100);
+
+    const appliedRule = getAppliedRule(service);
+    const markupPercent = Number(appliedRule?.markup_percent ?? 30);
+    const feeFixedBRL = Number(appliedRule?.fee_fixed_brl ?? 0);
+    const priceBRL = providerCost * (1 + markupPercent / 100) + feeFixedBRL;
 
     const { error } = await supabase.from("smm_orders").insert({
       user_id: userId,
@@ -179,7 +215,10 @@ export function NewOrderPage() {
       markup_percent: markupPercent,
       credits_spent: priceBRL,
       status: "pending",
-      meta: {},
+      meta: {
+        fee_fixed_brl: feeFixedBRL,
+        markup_rule_id: appliedRule?.id ?? null,
+      },
     });
 
     if (error) {
@@ -279,9 +318,14 @@ export function NewOrderPage() {
 
             {(() => {
               const selectedServiceData = services.find((s) => s.service === selectedService);
-              const calculatedPrice = selectedServiceData
+              const providerCost = selectedServiceData
                 ? (parseFloat(selectedServiceData.rate) * (parseFloat(quantity) || 0)) / 1000
                 : 0;
+              const rule = selectedServiceData ? getAppliedRule(selectedServiceData) : null;
+              const markupPercent = Number(rule?.markup_percent ?? 30);
+              const feeFixedBRL = Number(rule?.fee_fixed_brl ?? 0);
+              const markupValue = providerCost * (markupPercent / 100);
+              const calculatedPrice = providerCost + markupValue + feeFixedBRL;
 
               return selectedService && (
              <>
@@ -335,6 +379,26 @@ export function NewOrderPage() {
                     <p className="text-xs text-muted-foreground mt-1">
                       Serviço: {selectedServiceData?.name}
                     </p>
+
+                     <div className="mt-3 grid gap-1 text-xs text-muted-foreground">
+                       <div className="flex items-center justify-between">
+                         <span>Custo (provedor)</span>
+                         <span>R$ {providerCost.toFixed(2)}</span>
+                       </div>
+                       <div className="flex items-center justify-between">
+                         <span>Markup ({markupPercent.toFixed(2)}%)</span>
+                         <span>R$ {markupValue.toFixed(2)}</span>
+                       </div>
+                       <div className="flex items-center justify-between">
+                         <span>Taxa fixa</span>
+                         <span>R$ {feeFixedBRL.toFixed(2)}</span>
+                       </div>
+                       <div className="mt-1 h-px bg-border" />
+                       <div className="flex items-center justify-between font-medium text-foreground">
+                         <span>Lucro estimado</span>
+                         <span>R$ {(calculatedPrice - providerCost).toFixed(2)}</span>
+                       </div>
+                     </div>
                  </div>
                </div>
  
