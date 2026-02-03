@@ -203,7 +203,13 @@ export function NewOrderPage() {
       if (!p) return false;
       return category.includes(p);
     });
-    return byCategory ?? null;
+
+    // Priority 3: regra global (pattern especial "*")
+    const byGlobal = markupRules.find(
+      (r) => r.service_id == null && String(r.category_pattern ?? "").trim() === "*"
+    );
+
+    return byCategory ?? byGlobal ?? null;
   };
 
   useEffect(() => {
