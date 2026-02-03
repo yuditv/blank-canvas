@@ -212,6 +212,17 @@ export function NewOrderPage() {
     return byCategory ?? byGlobal ?? null;
   };
 
+  const formatBRL = (value: number) => {
+    const v = Number.isFinite(value) ? value : 0;
+    const small = Math.abs(v) > 0 && Math.abs(v) < 1;
+    return new Intl.NumberFormat("pt-BR", {
+      style: "currency",
+      currency: "BRL",
+      minimumFractionDigits: small ? 4 : 2,
+      maximumFractionDigits: small ? 4 : 2,
+    }).format(v);
+  };
+
   useEffect(() => {
     let filtered = services;
     if (selectedPlatform) {
@@ -474,7 +485,7 @@ export function NewOrderPage() {
                    <span>💳 Preço:</span>
                  </Label>
                  <div className="rounded-lg border border-primary/30 bg-card/60 p-4">
-                    <p className="text-2xl font-bold text-primary">R$ {calculatedPrice.toFixed(2)}</p>
+                     <p className="text-2xl font-bold text-primary">{formatBRL(calculatedPrice)}</p>
                     <p className="text-xs text-muted-foreground mt-1">
                       Serviço: {selectedServiceData?.name}
                     </p>
@@ -482,20 +493,20 @@ export function NewOrderPage() {
                      <div className="mt-3 grid gap-1 text-xs text-muted-foreground">
                        <div className="flex items-center justify-between">
                          <span>Custo (provedor)</span>
-                         <span>R$ {providerCost.toFixed(2)}</span>
+                          <span>{formatBRL(providerCost)}</span>
                        </div>
                        <div className="flex items-center justify-between">
                          <span>Markup ({markupPercent.toFixed(2)}%)</span>
-                         <span>R$ {markupValue.toFixed(2)}</span>
+                          <span>{formatBRL(markupValue)}</span>
                        </div>
                        <div className="flex items-center justify-between">
                          <span>Taxa fixa</span>
-                         <span>R$ {feeFixedBRL.toFixed(2)}</span>
+                          <span>{formatBRL(feeFixedBRL)}</span>
                        </div>
                        <div className="mt-1 h-px bg-border" />
                        <div className="flex items-center justify-between font-medium text-foreground">
                          <span>Lucro estimado</span>
-                         <span>R$ {(calculatedPrice - providerCost).toFixed(2)}</span>
+                          <span>{formatBRL(calculatedPrice - providerCost)}</span>
                        </div>
                      </div>
                  </div>
