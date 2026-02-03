@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 type MarkupRule = {
   id: string;
@@ -22,17 +23,21 @@ type MarkupRule = {
 type DraftRule = {
   service_id: string;
   category_pattern: string;
+  category_patterns_csv: string;
   markup_percent: string;
   fee_fixed_brl: string;
   is_active: boolean;
+  apply_to_all: boolean;
 };
 
 const emptyDraft = (): DraftRule => ({
   service_id: "",
   category_pattern: "",
+  category_patterns_csv: "",
   markup_percent: "30",
   fee_fixed_brl: "0",
   is_active: true,
+  apply_to_all: false,
 });
 
 export function AdminMarkupPage() {
@@ -42,6 +47,8 @@ export function AdminMarkupPage() {
   const [rules, setRules] = useState<MarkupRule[]>([]);
   const [draft, setDraft] = useState<DraftRule>(() => emptyDraft());
   const [saving, setSaving] = useState(false);
+  const [rulesTab, setRulesTab] = useState<"all" | "service" | "category" | "global">("all");
+  const [rulesSearch, setRulesSearch] = useState("");
 
   useEffect(() => {
     let alive = true;
@@ -84,11 +91,22 @@ export function AdminMarkupPage() {
   }, [navigate]);
 
   const canSave = useMemo(() => {
-    const hasMatcher = !!draft.service_id.trim() || !!draft.category_pattern.trim();
+    const hasMatcher =
+      draft.apply_to_all ||
+      !!draft.service_id.trim() ||
+      !!draft.category_pattern.trim() ||
+      !!draft.category_patterns_csv.trim();
     const mp = Number(draft.markup_percent);
     const fee = Number(draft.fee_fixed_brl);
     return hasMatcher && Number.isFinite(mp) && Number.isFinite(fee);
   }, [draft]);
+
+  const parseCategoryPatterns = (raw: string) => {
+    return raw
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
+  };
 
   const reload = async () => {
     const { data, error } = await supabase
@@ -106,15 +124,32 @@ export function AdminMarkupPage() {
     }
     setSaving(true);
     try {
-      await supabase
-        .from("smm_markup_rules")
-        .insert({
-          is_active: draft.is_active,
-          service_id: draft.service_id.trim() ? Number(draft.service_id) : null,
-          category_pattern: draft.category_pattern.trim() ? draft.category_pattern.trim() : null,
-          markup_percent: Number(draft.markup_percent),
-          fee_fixed_brl: Number(draft.fee_fixed_brl),
-        });
+      const base = {
+        is_active: draft.is_active,
+        markup_percent: Number(draft.markup_percent),
+        fee_fixed_brl: Number(draft.fee_fixed_brl),
+      };
+
+      const categories = parseCategoryPatterns(draft.category_patterns_csv);
+      const rows = (() => {
+        if (draft.apply_to_all) {
+          return [{ ...base, service_id: null, category_pattern: null }];
+        }
+
+        if (categories.length > 0) {
+          return categories.map((c) => ({ ...base, service_id: null, category_pattern: c }));
+        }
+
+        return [
+          {
+            ...base,
+            service_id: draft.service_id.trim() ? Number(draft.service_id) : null,
+            category_pattern: draft.category_pattern.trim() ? draft.category_pattern.trim() : null,
+          },
+        ];
+      })();
+
+      await supabase.from("smm_markup_rules").insert(rows);
       toast.success("Regra criada");
       setDraft(emptyDraft());
       await reload();
@@ -124,6 +159,23 @@ export function AdminMarkupPage() {
       setSaving(false);
     }
   };
+
+  const filteredRules = useMemo(() => {
+    const q = rulesSearch.trim().toLowerCase();
+    return rules.filter((r) => {
+      const isGlobal = r.service_id == null && !r.category_pattern;
+      const isService = r.service_id != null;
+      const isCategory = !isService && !!r.category_pattern;
+
+      if (rulesTab === "global" && !isGlobal) return false;
+      if (rulesTab === "service" && !isService) return false;
+      if (rulesTab === "category" && !isCategory) return false;
+
+      if (!q) return true;
+      const hay = `${r.service_id ?? ""} ${r.category_pattern ?? ""} ${r.markup_percent ?? ""} ${r.fee_fixed_brl ?? ""}`.toLowerCase();
+      return hay.includes(q);
+    });
+  }, [rules, rulesSearch, rulesTab]);
 
   const toggleActive = async (r: MarkupRule) => {
     setSaving(true);
@@ -173,7 +225,7 @@ export function AdminMarkupPage() {
               <Label>Service ID (opcional)</Label>
               <Input
                 value={draft.service_id}
-                onChange={(e) => setDraft((d) => ({ ...d, service_id: e.target.value }))}
+                onChange={(e) => setDraft((d) => ({ ...d, service_id: e.target.value, apply_to_all: false }))}
                 placeholder="Ex.: 1234"
                 className="bg-background/60 border-border/70"
               />
@@ -182,10 +234,20 @@ export function AdminMarkupPage() {
               <Label>Categoria (opcional)</Label>
               <Input
                 value={draft.category_pattern}
-                onChange={(e) => setDraft((d) => ({ ...d, category_pattern: e.target.value }))}
+                onChange={(e) => setDraft((d) => ({ ...d, category_pattern: e.target.value, apply_to_all: false }))}
                 placeholder="Ex.: instagram"
                 className="bg-background/60 border-border/70"
               />
+            </div>
+            <div className="space-y-2 md:col-span-2">
+              <Label>Categorias (várias) — separadas por vírgula (opcional)</Label>
+              <Input
+                value={draft.category_patterns_csv}
+                onChange={(e) => setDraft((d) => ({ ...d, category_patterns_csv: e.target.value, apply_to_all: false }))}
+                placeholder="Ex.: instagram, tiktok, youtube"
+                className="bg-background/60 border-border/70"
+              />
+              <p className="text-xs text-muted-foreground">Se preencher, cria uma regra por categoria.</p>
             </div>
             <div className="space-y-2">
               <Label>Markup (%)</Label>
@@ -209,6 +271,28 @@ export function AdminMarkupPage() {
             </div>
           </div>
 
+          <div>
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={draft.apply_to_all}
+                onChange={(e) =>
+                  setDraft((d) => ({
+                    ...d,
+                    apply_to_all: e.target.checked,
+                    service_id: e.target.checked ? "" : d.service_id,
+                    category_pattern: e.target.checked ? "" : d.category_pattern,
+                    category_patterns_csv: e.target.checked ? "" : d.category_patterns_csv,
+                  }))
+                }
+              />
+              Aplicar em TODOS os serviços (regra global)
+            </label>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Use como fallback: Service ID (exato) → Categoria (contém) → Global.
+            </p>
+          </div>
+
           <div className="flex items-center justify-end gap-2">
             <Button variant="secondary" onClick={() => setDraft(emptyDraft())} disabled={saving}>
               Limpar
@@ -225,18 +309,36 @@ export function AdminMarkupPage() {
           <h2 className="text-lg font-semibold">Regras cadastradas</h2>
         </CardHeader>
         <CardContent className="pt-6 space-y-3">
-          {rules.length === 0 ? (
+          <Tabs value={rulesTab} onValueChange={(v) => setRulesTab(v as any)} className="space-y-3">
+            <TabsList className="grid w-full grid-cols-4">
+              <TabsTrigger value="all">Todas</TabsTrigger>
+              <TabsTrigger value="service">Service ID</TabsTrigger>
+              <TabsTrigger value="category">Categorias</TabsTrigger>
+              <TabsTrigger value="global">Global</TabsTrigger>
+            </TabsList>
+            <TabsContent value={rulesTab} className="space-y-2">
+              <Label>Filtrar</Label>
+              <Input
+                value={rulesSearch}
+                onChange={(e) => setRulesSearch(e.target.value)}
+                placeholder="Digite para filtrar (ex.: instagram, 1234, 30)"
+                className="bg-background/60 border-border/70"
+              />
+            </TabsContent>
+          </Tabs>
+
+          {filteredRules.length === 0 ? (
             <div className="text-sm text-muted-foreground">Nenhuma regra ainda.</div>
           ) : (
             <div className="space-y-2">
-              {rules.map((r) => (
+              {filteredRules.map((r) => (
                 <div
                   key={r.id}
                   className="flex flex-col gap-2 rounded-lg border border-border bg-card/50 p-4 md:flex-row md:items-center md:justify-between"
                 >
                   <div className="space-y-1">
                     <div className="text-sm font-medium">
-                      {r.service_id != null ? `Service #${r.service_id}` : "(sem service)"} · {r.category_pattern ?? "(sem categoria)"}
+                      {r.service_id != null ? `Service #${r.service_id}` : r.category_pattern ? "Categoria" : "Global"} · {r.category_pattern ?? "(todas)"}
                     </div>
                     <div className="text-xs text-muted-foreground">
                       Markup: <b>{Number(r.markup_percent).toFixed(2)}%</b> · Taxa: <b>R$ {Number(r.fee_fixed_brl).toFixed(2)}</b>

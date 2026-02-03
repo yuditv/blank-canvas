@@ -2,7 +2,8 @@ import * as React from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import { Bell, RefreshCw } from "lucide-react";
+import { RefreshCw } from "lucide-react";
+import { NotificationsDialog } from "@/components/notifications/NotificationsDialog";
 
 type TopBarProps = {
   className?: string;
@@ -36,9 +37,7 @@ export function TopBar({ className, onRefresh }: TopBarProps) {
       </div>
 
       <div className="flex items-center gap-2">
-        <Button variant="outline" className="bg-background/20" aria-label="Notificações">
-          <Bell />
-        </Button>
+        <NotificationsDialog count={5} items={[]} className="bg-background/20" />
         <Button onClick={handleRefresh} className="gap-2">
           <RefreshCw className={cn("h-4 w-4", spinning && "animate-spin")} />
           Atualizar
