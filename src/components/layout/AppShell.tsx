@@ -1,4 +1,4 @@
- import { useEffect, useMemo, useState } from "react";
+  import { useEffect, useMemo, useState } from "react";
  import { Outlet } from "react-router-dom";
  import {
    Sidebar,
@@ -45,7 +45,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
  import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
  import { ThemeToggle } from "@/components/theme/ThemeToggle";
-  import { NotificationsDialog } from "@/components/notifications/NotificationsDialog";
+   import { NotificationsDialog } from "@/components/notifications/NotificationsDialog";
+ import { NotificationsProvider, useNotifications } from "@/components/notifications/notifications-store";
+ import { useOrderCompletionNotifications } from "@/hooks/useOrderCompletionNotifications";
  
  type AppShellProps = {
    brandName: string;
@@ -66,8 +68,14 @@ import { toast } from "sonner";
   type RouteItem = (typeof baseRoutes)[number];
  
   function AppSidebarContent({ routes }: { routes: RouteItem[] }) {
-   const { state } = useSidebar();
+    const { state, isMobile, setOpen, setOpenMobile } = useSidebar();
    const collapsed = state === "collapsed";
+
+    const handleNavClick = () => {
+      // Minimiza sempre após selecionar um item
+      if (isMobile) setOpenMobile(false);
+      else setOpen(false);
+    };
  
    return (
      <Sidebar
@@ -99,6 +107,7 @@ import { toast } from "sonner";
                        end
                        className="flex items-center gap-2 hover:bg-sidebar-accent rounded-md"
                        activeClassName="bg-primary text-primary-foreground font-medium"
+                        onClick={handleNavClick}
                      >
                        <r.icon className="h-4 w-4" />
                        {!collapsed && <span>{r.label}</span>}
@@ -114,31 +123,24 @@ import { toast } from "sonner";
    );
  }
  
- export function AppShell({ brandName, currency }: AppShellProps) {
+  function AppShellInner({ brandName, currency }: AppShellProps) {
    const [balance] = useState(1.42);
-    const [notificationCount, setNotificationCount] = useState(5);
   const navigate = useNavigate();
    const [userEmail, setUserEmail] = useState<string>("");
    const [userName, setUserName] = useState<string>("");
    const [avatarUrl, setAvatarUrl] = useState<string>("");
     const [isAdmin, setIsAdmin] = useState(false);
 
+    const { items: notifications, markAllRead } = useNotifications();
+    const unreadCount = useMemo(() => notifications.filter((n) => n.unread).length, [notifications]);
+    useOrderCompletionNotifications();
+
    const initials = useMemo(() => {
      const n = (userName || userEmail || "U").trim();
      return n.slice(0, 1).toUpperCase();
    }, [userName, userEmail]);
 
-    // Placeholder local: substitua por leitura do banco quando quiser.
-    const notifications = useMemo(
-      () =>
-        Array.from({ length: notificationCount }).map((_, idx) => ({
-          id: `n_${idx + 1}`,
-          title: `Notificação #${idx + 1}`,
-          description: "Clique para ver detalhes.",
-          unread: true,
-        })),
-      [notificationCount],
-    );
+     // Notificações agora vêm do store (header + polling de conclusão).
 
    useEffect(() => {
      let alive = true;
@@ -221,9 +223,9 @@ import { toast } from "sonner";
                </div>
  
                 <NotificationsDialog
-                  count={notificationCount}
-                  items={notifications}
-                  onMarkAllRead={() => setNotificationCount(0)}
+                   count={unreadCount}
+                   items={notifications}
+                   onMarkAllRead={markAllRead}
                 />
 
                 <ThemeToggle />
@@ -264,5 +266,13 @@ import { toast } from "sonner";
           </div>
         </AuroraBackground>
      </SidebarProvider>
-   );
- }
+    );
+  }
+
+  export function AppShell(props: AppShellProps) {
+    return (
+      <NotificationsProvider>
+        <AppShellInner {...props} />
+      </NotificationsProvider>
+    );
+  }
