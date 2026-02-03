@@ -5,6 +5,7 @@ import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { useInstaLuxoAPI } from "@/hooks/useInstaLuxoAPI";
 import { toast } from "sonner";
+import { useNotifications } from "@/components/notifications/notifications-store";
 
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -113,6 +114,7 @@ function parseLines(input: string): { rows: ParsedLine[]; errors: RowResult[] } 
 export function MultiOrdersPage() {
   const navigate = useNavigate();
   const { loading, fetchServices, createOrder } = useInstaLuxoAPI();
+  const { addNotification } = useNotifications();
 
   const [userId, setUserId] = useState<string | null>(null);
   const [text, setText] = useState("");
@@ -302,6 +304,11 @@ export function MultiOrdersPage() {
     const ok = out.filter((x) => x.status === "ok").length;
     const err = out.length - ok;
     toast.success(`Concluído: ${ok} ok, ${err} erro(s)`);
+
+    addNotification({
+      title: "Multi-pedidos concluído",
+      description: `${ok} enviado(s) • ${err} erro(s)`,
+    });
   };
 
   return (

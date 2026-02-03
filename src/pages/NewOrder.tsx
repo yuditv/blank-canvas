@@ -3,6 +3,7 @@ import { memo } from "react";
  import { useNavigate } from "react-router-dom";
  import { supabase } from "@/integrations/supabase/client";
  import { useInstaLuxoAPI } from "@/hooks/useInstaLuxoAPI";
+ import { useNotifications } from "@/components/notifications/notifications-store";
  import { toast } from "sonner";
  import { Card, CardContent, CardHeader } from "@/components/ui/card";
  import { Button } from "@/components/ui/button";
@@ -91,6 +92,7 @@ export function NewOrderPage() {
  
   const navigate = useNavigate();
   const { loading, fetchServices, createOrder } = useInstaLuxoAPI();
+  const { addNotification } = useNotifications();
   const [services, setServices] = useState<any[]>([]);
   const [filteredServices, setFilteredServices] = useState<any[]>([]);
   const [groupedServices, setGroupedServices] = useState<Record<string, Record<string, any[]>>>({});
@@ -270,6 +272,11 @@ export function NewOrderPage() {
     }
 
     toast.success("Pedido criado com sucesso!");
+    addNotification({
+      id: `created:${orderData.order}`,
+      title: "Pedido criado",
+      description: `${service.name} • Pedido #${orderData.order}`,
+    });
     navigate("/pedidos");
   };
  
