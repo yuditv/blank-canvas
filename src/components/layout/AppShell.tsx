@@ -24,6 +24,7 @@
   LogOut,
   Store,
   FileText,
+   CopyPlus,
    Settings,
  } from "lucide-react";
  import { Button } from "@/components/ui/button";
@@ -52,6 +53,7 @@ import { toast } from "sonner";
  
   const baseRoutes = [
    { path: "/", icon: ShoppingCart, label: "Fazer Novo Pedido" },
+    { path: "/multi-pedidos", icon: CopyPlus, label: "Multi-pedidos" },
    { path: "/pedidos", icon: History, label: "Histórico de Pedido" },
    { path: "/saldo", icon: Wallet, label: "Adicionar Saldo" },
   { path: "/painel-revenda", icon: Store, label: "Painel de Revenda" },
