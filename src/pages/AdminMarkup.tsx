@@ -20,6 +20,10 @@ type MarkupRule = {
   updated_at?: string;
 };
 
+// Como a tabela possui constraint exigindo um "match" (service_id OU category_pattern),
+// representamos a regra global com um pattern especial.
+const GLOBAL_CATEGORY_PATTERN = "*";
+
 type DraftRule = {
   service_id: string;
   category_pattern: string;
@@ -133,7 +137,7 @@ export function AdminMarkupPage() {
       const categories = parseCategoryPatterns(draft.category_patterns_csv);
       const rows = (() => {
         if (draft.apply_to_all) {
-          return [{ ...base, service_id: null, category_pattern: null }];
+          return [{ ...base, service_id: null, category_pattern: GLOBAL_CATEGORY_PATTERN }];
         }
 
         if (categories.length > 0) {
@@ -149,7 +153,8 @@ export function AdminMarkupPage() {
         ];
       })();
 
-      await supabase.from("smm_markup_rules").insert(rows);
+      const { error } = await supabase.from("smm_markup_rules").insert(rows);
+      if (error) throw error;
       toast.success("Regra criada");
       setDraft(emptyDraft());
       await reload();
@@ -163,9 +168,9 @@ export function AdminMarkupPage() {
   const filteredRules = useMemo(() => {
     const q = rulesSearch.trim().toLowerCase();
     return rules.filter((r) => {
-      const isGlobal = r.service_id == null && !r.category_pattern;
+      const isGlobal = r.service_id == null && (r.category_pattern === GLOBAL_CATEGORY_PATTERN);
       const isService = r.service_id != null;
-      const isCategory = !isService && !!r.category_pattern;
+      const isCategory = !isService && !!r.category_pattern && !isGlobal;
 
       if (rulesTab === "global" && !isGlobal) return false;
       if (rulesTab === "service" && !isService) return false;
@@ -338,7 +343,12 @@ export function AdminMarkupPage() {
                 >
                   <div className="space-y-1">
                     <div className="text-sm font-medium">
-                      {r.service_id != null ? `Service #${r.service_id}` : r.category_pattern ? "Categoria" : "Global"} · {r.category_pattern ?? "(todas)"}
+                      {r.service_id != null
+                        ? `Service #${r.service_id}`
+                        : r.category_pattern === GLOBAL_CATEGORY_PATTERN
+                          ? "Global"
+                          : "Categoria"}{" "}
+                      · {r.category_pattern === GLOBAL_CATEGORY_PATTERN ? "(todas)" : (r.category_pattern ?? "(todas)")}
                     </div>
                     <div className="text-xs text-muted-foreground">
                       Markup: <b>{Number(r.markup_percent).toFixed(2)}%</b> · Taxa: <b>R$ {Number(r.fee_fixed_brl).toFixed(2)}</b>
