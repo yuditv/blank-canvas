@@ -225,7 +225,9 @@ export function NewOrderPage() {
       return;
     }
 
-    const service = services.find((s) => s.service === selectedService);
+    // API retorna `service` como number (ex.: 3704) e o Select mantém como string.
+    // Normalizamos para evitar falhas em comparações e manter o preço atualizando corretamente.
+    const service = services.find((s) => String(s.service) === String(selectedService));
     if (!service) return;
 
     const orderData = await createOrder({
@@ -408,7 +410,7 @@ export function NewOrderPage() {
             </div>
 
             {(() => {
-              const selectedServiceData = services.find((s) => s.service === selectedService);
+              const selectedServiceData = services.find((s) => String(s.service) === String(selectedService));
               const providerCost = selectedServiceData
                 ? (parseFloat(selectedServiceData.rate) * (parseFloat(quantity) || 0)) / 1000
                 : 0;
