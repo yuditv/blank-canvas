@@ -17,6 +17,7 @@ const TermsPage = lazy(() => import("@/pages/Terms").then(m => ({ default: m.Ter
 const AccountPage = lazy(() => import("@/pages/Account").then(m => ({ default: m.AccountPage })));
 const LoginPage = lazy(() => import("@/pages/Login").then(m => ({ default: m.LoginPage })));
 const AdminMarkupPage = lazy(() => import("@/pages/AdminMarkup").then(m => ({ default: m.AdminMarkupPage })));
+const MultiOrdersPage = lazy(() => import("@/pages/MultiOrders").then(m => ({ default: m.MultiOrdersPage })));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient();
@@ -42,6 +43,7 @@ const App = () => (
             <Route path="/login" element={<LoginPage />} />
             <Route element={<AppShell brandName="SamyLuxo" currency="BRL" />}>
               <Route path="/" element={<NewOrderPage />} />
+               <Route path="/multi-pedidos" element={<MultiOrdersPage />} />
               <Route path="/pedidos" element={<OrdersPage />} />
               <Route path="/saldo" element={<WalletPage />} />
               <Route path="/painel-revenda" element={<ResellerPanelPage />} />
