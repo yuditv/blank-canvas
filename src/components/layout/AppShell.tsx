@@ -19,7 +19,6 @@
    History,
    Wallet,
    HelpCircle,
-   Bell,
    Coins,
    User,
   LogOut,
@@ -44,6 +43,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
  import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
  import { ThemeToggle } from "@/components/theme/ThemeToggle";
+  import { NotificationsDialog } from "@/components/notifications/NotificationsDialog";
  
  type AppShellProps = {
    brandName: string;
@@ -112,6 +112,7 @@ import { toast } from "sonner";
  
  export function AppShell({ brandName, currency }: AppShellProps) {
    const [balance] = useState(1.42);
+    const [notificationCount, setNotificationCount] = useState(5);
   const navigate = useNavigate();
    const [userEmail, setUserEmail] = useState<string>("");
    const [userName, setUserName] = useState<string>("");
@@ -122,6 +123,18 @@ import { toast } from "sonner";
      const n = (userName || userEmail || "U").trim();
      return n.slice(0, 1).toUpperCase();
    }, [userName, userEmail]);
+
+    // Placeholder local: substitua por leitura do banco quando quiser.
+    const notifications = useMemo(
+      () =>
+        Array.from({ length: notificationCount }).map((_, idx) => ({
+          id: `n_${idx + 1}`,
+          title: `Notificação #${idx + 1}`,
+          description: "Clique para ver detalhes.",
+          unread: true,
+        })),
+      [notificationCount],
+    );
 
    useEffect(() => {
      let alive = true;
@@ -203,12 +216,11 @@ import { toast } from "sonner";
                  </span>
                </div>
  
-               <Button variant="ghost" size="icon" className="relative">
-                 <Bell className="h-4 w-4" />
-                 <span className="absolute -top-0.5 -right-0.5 h-4 w-4 flex items-center justify-center rounded-full bg-destructive text-[10px] font-bold text-destructive-foreground">
-                   5
-                 </span>
-               </Button>
+                <NotificationsDialog
+                  count={notificationCount}
+                  items={notifications}
+                  onMarkAllRead={() => setNotificationCount(0)}
+                />
 
                 <ThemeToggle />
  

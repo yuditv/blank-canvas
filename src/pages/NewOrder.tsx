@@ -300,6 +300,19 @@ export function NewOrderPage() {
                <span className="text-yellow-500">👇</span>
              </Label>
              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
+                <button
+                  onClick={() => setSelectedPlatform("")}
+                  className={`
+                      flex flex-col items-center gap-2 rounded-lg border p-3 transition-all
+                      ${
+                        selectedPlatform === ""
+                          ? "border-primary bg-primary/10"
+                          : "border-border/70 bg-card/60 hover:bg-card/80"
+                      }
+                    `}
+                >
+                  <span className="text-xs font-medium">Todas</span>
+                </button>
                {socialPlatforms.map((p) => (
                  <button
                    key={p.id}
